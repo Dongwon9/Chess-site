@@ -54,7 +54,7 @@ export class Room {
     try {
       this.board.move(move);
     } catch (error) {
-      //오류 처리
+      //TODO:오류 처리
       return;
     }
     getServer()
