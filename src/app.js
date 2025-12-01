@@ -2,26 +2,22 @@ import express from 'express';
 import { createServer } from 'node:http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { setupWebSocket } from './ws/server.js';
-import { config } from './config/env.js';
-import { logger } from './utils/logger.js';
-import { errorHandler, asyncHandler } from './middleware/errorHandler.js';
-import { requestLogger } from './middleware/requestLogger.js';
-import apiRoutes from './routes/index.js';
+import { getServer } from './ws/server.js';
+import lobbyRouter from './routes/lobby.router.js';
 import session from 'express-session';
+
+const PORT = 8080;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = createServer(app);
-const wsServer = setupWebSocket(server);
+const wsServer = getServer(server);
 
-// Middleware
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(requestLogger);
 app.use(
   session({
     secret: 'asdsad',
@@ -32,32 +28,14 @@ app.use(
     },
   }),
 );
-// Routes
-app.use('/api', apiRoutes);
+
+app.use('/lobby', lobbyRouter);
 
 app.get('/', (req, res) => {
   res.redirect('lobby.html');
 });
-
-app.get('/get-nickname', (req, res) => {
-  res.json({ nickname: req.session.nickname || null });
-});
-
-app.post('/set-nickname', (req, res) => {
-  const { nickname } = req.body;
-  req.session.nickname = nickname;
-  res.json({ success: true });
-});
-// Error handling
-app.use(errorHandler);
-
 // Server startup
-const PORT = config.port;
-server.listen(PORT, () => {
-  logger.info(`Server listening on http://localhost:${PORT}`, {
-    env: config.nodeEnv,
-  });
-});
+server.listen(PORT);
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

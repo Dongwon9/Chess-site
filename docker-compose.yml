@@ -1,0 +1,29 @@
+version: '3.9'
+
+services:
+  chess-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chess-site
+    ports:
+      - '8080:8080'
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:8080', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})",
+        ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    # 볼륨 마운트 (선택사항 - 개발 중에 사용)
+    # volumes:
+    #   - ./src:/app/src
+    #   - ./public:/app/public

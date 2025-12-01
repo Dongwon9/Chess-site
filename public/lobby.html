@@ -5,20 +5,10 @@
 </head>
 
 <body>
-  <h2>환영합니다. <span id="nickname"></span></h2>
-  <div id="user_list">
-    <ul>
-      <li>User 1</li>
-      <li>User 2</li>
-      <li>User 3</li>
-    </ul>
-  </div>
-  <button id="toRoomBtn">방으로</button>
+  <h2>환영합니다. <span id="nickname"></span></h2><button id="changeNickname">닉네임 변경</button>
+  <ul id="roomList">
+    <li>이것이 보이면 안됩니다.</li>
+  </ul>
+  <button id="createRoom">방 만들기</button>
 </body>
-<script type="module">
-  import { io } from 'https://cdn.socket.io/4.8.1/socket.io.esm.min.js';
-  import getNickname from './utils/getNickname.js';
-  const socket = io();
-  const nickname = getNickname();
-  document.getElementById('nickname').innerText = nickname;
-</script>
+<script type="module" src="./js/lobby.js"></script>

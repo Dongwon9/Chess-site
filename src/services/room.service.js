@@ -1,15 +1,11 @@
-import getServer from '../ws/server';
+import { getServer } from '../ws/server.js';
 import { Chess } from 'chess.js';
 
 export class Room {
-  static Rooms = [];
-
   constructor(creatorNickname) {
     this.board = new Chess();
-    this.players = [];
-    this.players.push({ nickname: creatorNickname, isReady: false });
+    this.players = [{ nickname: creatorNickname, isReady: true }];
     this.whitePlayer = null;
-    this.name = creatorNickname;
     this.isPlaying = false;
   }
 
@@ -17,6 +13,8 @@ export class Room {
     const player = this.players.find((p) => p.nickname === nickname);
     if (player) {
       player.isReady = isReady;
+    } else {
+      throw new Error(`Player not found: ${nickname}`);
     }
   }
 
@@ -61,8 +59,30 @@ export class Room {
       .to(this.name)
       .emit('boardUpdate', { move, newFen: this.board.fen() });
   }
+  canJoin() {
+    return this.players.length < 2 && !this.isPlaying;
+  }
 
-  getRoom(nickname) {
-    return Room.Rooms.find((room) => room.name === nickname);
+  joinRoom(nickname) {
+    if (this.players.find((p) => p.nickname === nickname)) {
+      throw new Error(`Player already in room: ${nickname}`);
+    }
+    if (this.players.length >= 2) {
+      throw new Error('Room is full');
+    }
+    this.players.push({ nickname, isReady: false });
+  }
+
+  getOpponentOf(nickname) {
+    const opponent = this.players.find((p) => p.nickname !== nickname);
+    return opponent ? opponent.nickname : null;
+  }
+
+  leaveRoom(nickname) {
+    this.players = this.players.filter((p) => p.nickname !== nickname);
+  }
+
+  isWhite(nickname) {
+    return this.whitePlayer === nickname;
   }
 }
