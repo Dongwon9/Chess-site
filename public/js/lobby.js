@@ -1,5 +1,5 @@
-import { io } from 'socket.io-client';
-import { getNickname } from './js/getNickname.js';
+import { io } from 'https://esm.sh/socket.io-client';
+import { getNickname } from './getNickname.js';
 const socket = io({
   query: {
     toRoom: 'lobby',
@@ -9,11 +9,11 @@ const nickname = getNickname();
 document.getElementById('nickname').innerText = nickname;
 
 document.getElementById('createRoom').addEventListener('click', async () => {
-  const { success } = await fetch('/lobby/create-room', {
+  const { id } = await fetch('/lobby/create-room', {
     method: 'POST',
   });
-  if (success) {
-    window.location.href = `/room.html?id=${nickname}`;
+  if (id) {
+    window.location.href = `/room.html?id=${id}`;
   }
 });
 
@@ -27,13 +27,13 @@ socket.on('updateLobby', (rooms) => {
     return;
   }
 
-  rooms.forEach((room) => {
+  rooms.forEach((roomId) => {
     const li = document.createElement('li');
-    li.innerText = room.name;
+    li.innerText = roomId;
     const button = document.createElement('button');
     button.innerText = '입장';
     button.onclick = () => {
-      window.location.href = `/room.html?id=${room.id}`;
+      window.location.href = `/room.html?id=${roomId}`;
     };
     li.appendChild(button);
     roomList.appendChild(li);

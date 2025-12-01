@@ -1,10 +1,11 @@
-import { getServer } from '../ws/server.js';
+import { getIO } from '../ws/server.js';
 import { Chess } from 'chess.js';
 
 export class Room {
-  constructor(creatorNickname) {
+  constructor(id) {
+    this.id = id;
     this.board = new Chess();
-    this.players = [{ nickname: creatorNickname, isReady: true }];
+    this.players = [];
     this.whitePlayer = null;
     this.isPlaying = false;
   }
@@ -55,7 +56,7 @@ export class Room {
       //TODO:오류 처리
       return;
     }
-    getServer()
+    getIo()
       .to(this.name)
       .emit('boardUpdate', { move, newFen: this.board.fen() });
   }
@@ -84,5 +85,14 @@ export class Room {
 
   isWhite(nickname) {
     return this.whitePlayer === nickname;
+  }
+
+  getRoomInfo() {
+    return {
+      boardFen: this.board.fen(),
+      players: this.players,
+      isPlaying: this.isPlaying,
+      whitePlayer: this.whitePlayer,
+    };
   }
 }

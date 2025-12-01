@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # 포트 노출
-EXPOSE 8080
+EXPOSE 3000
 
 # 개발 서버 실행 (nodemon 사용)
 CMD ["npm", "run", "start:dev"]

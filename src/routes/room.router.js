@@ -4,11 +4,13 @@ const router = express.Router();
 
 router.get('/get-room', (req, res) => {
   const { id } = req.query;
-  const room = getRoomById(id);
-  if (room) {
-    res.json(room);
-  } else {
-    res.json(createRoom(id));
+  let join = false;
+  let room = getRoomById(id);
+  if (!room) {
+    room = createRoom();
+    join = true;
   }
+  const { board, players } = room;
+  res.json({ board, players, join });
 });
 export default router;

@@ -1,29 +1,20 @@
-import getNickname from './utils/getNickname.js';
-import { io } from 'socket.io-client';
+import { getNickname } from './getNickname.js';
+import { io } from 'https://esm.sh/socket.io-client';
 
 const roomId = new URLSearchParams(window.location.search).get('id');
-
-const room = await fetch(`/rooms/get-room?id=${roomId}`).then((res) =>
-  res.json(),
-);
-
 const socket = io({
   query: {
     toRoom: roomId,
   },
 });
-socket.joinRoom(roomId);
 const nickname = getNickname();
 document.getElementById('myName').innerText = nickname;
-room.joinRoom(nickname);
 const opponentNameElement = document.getElementById('opponentName');
-updateOpponent();
+const board = Chessboard('chessBoard');
 
-const board = ChessBoard('chessBoard');
-
-function updateOpponent() {
-  const opponentNickname = room.getOpponentOf(nickname);
-  opponentNameElement.innerText = opponentNickname
-    ? opponentNickname
-    : '상대를 기다리는중...';
-}
+socket.on('updateRoom', (info) => {
+  const { boardFen, players, isPlaying } = info;
+  board.position(boardFen);
+  const opponent = players.find((name) => name !== nickname);
+  opponentNameElement.innerText = opponent ? opponent : '대기 중';
+});
