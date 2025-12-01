@@ -1,16 +1,16 @@
 import { io } from 'socket.io-client';
 import { getNickname } from './js/getNickname.js';
-const socket = io();
+const socket = io({
+  query: {
+    toRoom: 'lobby',
+  },
+});
 const nickname = getNickname();
 document.getElementById('nickname').innerText = nickname;
 
 document.getElementById('createRoom').addEventListener('click', async () => {
   const { success } = await fetch('/lobby/create-room', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ roomName: nickname }),
   });
   if (success) {
     window.location.href = `/room.html?id=${nickname}`;
@@ -26,6 +26,7 @@ socket.on('updateLobby', (rooms) => {
     roomList.appendChild(li);
     return;
   }
+
   rooms.forEach((room) => {
     const li = document.createElement('li');
     li.innerText = room.name;

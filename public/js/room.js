@@ -7,7 +7,11 @@ const room = await fetch(`/rooms/get-room?id=${roomId}`).then((res) =>
   res.json(),
 );
 
-const socket = io();
+const socket = io({
+  query: {
+    toRoom: roomId,
+  },
+});
 socket.joinRoom(roomId);
 const nickname = getNickname();
 document.getElementById('myName').innerText = nickname;

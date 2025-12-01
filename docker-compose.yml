@@ -5,25 +5,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: chess-site
+    container_name: chess-dev
     ports:
-      - '8080:8080'
+      - "8080:8080"
+    volumes:
+      # 소스 코드 핫 리로드
+      - .:/app
+      # node_modules는 바인드 마운트 제외
+      - /app/node_modules
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
+    stdin_open: true
+    tty: true
+    # 컨테이너 종료 시 자동 재시작
     restart: unless-stopped
-    healthcheck:
-      test:
-        [
-          'CMD',
-          'node',
-          '-e',
-          "require('http').get('http://localhost:8080', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})",
-        ]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
-    # 볼륨 마운트 (선택사항 - 개발 중에 사용)
-    # volumes:
-    #   - ./src:/app/src
-    #   - ./public:/app/public

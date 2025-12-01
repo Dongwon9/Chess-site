@@ -1,6 +1,4 @@
 import { Server } from 'socket.io';
-import { logger } from '../utils/logger.js';
-import { setupRoomHandlers } from './room.handler.js';
 import { setupLobbyHandlers } from './lobby.handler.js';
 let server;
 export function getServer(httpServer) {
@@ -9,9 +7,7 @@ export function getServer(httpServer) {
   }
 
   server = new Server(httpServer);
-  setupRoomHandlers(server);
   setupLobbyHandlers(server);
-  logger.info('WebSocket server setup complete');
 
   return server;
 }

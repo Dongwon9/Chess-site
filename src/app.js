@@ -5,7 +5,6 @@ import { fileURLToPath } from 'url';
 import { getServer } from './ws/server.js';
 import lobbyRouter from './routes/lobby.router.js';
 import session from 'express-session';
-
 const PORT = 8080;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,14 +35,5 @@ app.get('/', (req, res) => {
 });
 // Server startup
 server.listen(PORT);
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    logger.info('Server closed');
-    process.exit(0);
-  });
-});
 
 export default app;

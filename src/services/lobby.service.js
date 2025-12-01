@@ -1,14 +1,11 @@
 import { getServer } from '../ws/server.js';
 import { Room } from './room.service.js';
-
+import { v4 } from 'uuid';
 const rooms = new Map();
 
-export function createRoom(roomId) {
-  if (rooms.has(roomId)) {
-    throw new Error(`Room already exists: ${roomId}`);
-  }
-  const newRoom = new Room(roomId);
-  rooms.set(roomId, newRoom);
+export function createRoom() {
+  const newRoom = new Room(v4());
+  rooms.set(newRoom.id, newRoom);
   getServer().in('lobby').emit('updateLobby', getJoinableRooms());
   return newRoom;
 }
@@ -16,7 +13,7 @@ export function createRoom(roomId) {
 export function getJoinableRooms() {
   return Array.from(rooms.entries())
     .filter(([_, room]) => room.canJoin())
-    .map(([k]) => k);
+    .map(([k, v]) => k);
 }
 
 export function getRoomById(roomId) {
