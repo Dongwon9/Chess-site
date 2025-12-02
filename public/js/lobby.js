@@ -5,7 +5,7 @@ const socket = io({
     toRoom: 'lobby',
   },
 });
-const nickname = getNickname();
+let nickname = getNickname();
 document.getElementById('nickname').innerText = nickname;
 
 document.getElementById('createRoom').addEventListener('click', async () => {

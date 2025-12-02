@@ -1,5 +1,6 @@
 import { getIO } from '../ws/server.js';
 import { Chess } from 'chess.js';
+import logger from '../utils/logger.js';
 
 export class Room {
   constructor(id) {
@@ -34,49 +35,77 @@ export class Room {
     this.board.reset();
     this.isPlaying = true;
   }
-  endGame(winnerNickname) {
-    let endReason;
+  endGame(winner) {
+    let reason;
     if (this.board.isCheckmate()) {
-      endReason = '체크메이트';
+      reason = '체크메이트';
     } else if (this.board.isStalemate()) {
-      endReason = '스테일메이트';
+      reason = '스테일메이트';
     } else if (this.board.isThreefoldRepetition()) {
-      endReason = '삼중 반복';
+      reason = '삼중 반복';
     } else if (this.board.isInsufficientMaterial()) {
-      endReason = '불충분한 기물';
-    } else if (this.board.isDrawByFiftyMoves()) {
-      endReason = '50수 무승부';
+      reason = '불충분한 기물';
+    } else if (this.board.isDraw()) {
+      reason = '50수 무승부';
+    } else {
+      reason = '기타';
     }
     this.isPlaying = false;
+    logger.info({ roomId: this.id, winner, reason }, '게임 종료');
+    return { winner, reason, finalFen: this.board.fen() };
   }
-  makeMove(move) {
+  makeMove(move, nickname) {
+    if (!this.isPlaying) {
+      return { error: '게임이 시작되지 않았습니다' };
+    }
+
+    const isPlayerWhite = this.isWhite(nickname);
+    const isWhiteTurn = this.board.turn() === 'w';
+
+    if (isPlayerWhite !== isWhiteTurn) {
+      return { error: '당신의 차례가 아닙니다' };
+    }
+
     try {
       this.board.move(move);
+      logger.info({ roomId: this.id, nickname, move: move.from + move.to }, '기물 이동');
+
+      const result = {
+        fen: this.board.fen(),
+        turn: this.board.turn(),
+        gameOver: this.board.isGameOver(),
+      };
+
+      if (result.gameOver) {
+        result.winner = this.board.turn() === 'w' ? 'black' : 'white';
+      }
+
+      return result;
     } catch (error) {
-      //TODO:오류 처리
-      return;
+      logger.warn({ roomId: this.id, nickname, move, error: error.message }, '잘못된 이동 시도');
+      return { error: '잘못된 이동입니다' };
     }
-    getIo()
-      .to(this.name)
-      .emit('boardUpdate', { move, newFen: this.board.fen() });
   }
   canJoin() {
     return this.players.length < 2 && !this.isPlaying;
   }
 
-  joinRoom(nickname) {
+  join(nickname) {
+    if (!nickname) {
+      throw new Error('Nickname is required');
+    }
     if (this.players.find((p) => p.nickname === nickname)) {
-      throw new Error(`Player already in room: ${nickname}`);
+      logger.debug({ roomId: this.id, nickname }, '이미 참가한 플레이어');
+      return;
     }
     if (this.players.length >= 2) {
-      throw new Error('Room is full');
+      throw new Error('방이 가득 찼습니다');
+    }
+    if (this.isPlaying) {
+      throw new Error('게임이 진행 중입니다');
     }
     this.players.push({ nickname, isReady: false });
-  }
-
-  getOpponentOf(nickname) {
-    const opponent = this.players.find((p) => p.nickname !== nickname);
-    return opponent ? opponent.nickname : null;
+    logger.info({ roomId: this.id, nickname, playerCount: this.players.length }, '플레이어 입장');
   }
 
   leaveRoom(nickname) {

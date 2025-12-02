@@ -1,12 +1,14 @@
 import { getIO } from '../ws/server.js';
 import { Room } from './room.service.js';
 import { v4 } from 'uuid';
+import logger from '../utils/logger.js';
 const rooms = new Map();
 
-export function createRoom() {
-  const newRoom = new Room(v4());
+export function createRoom(roomId = null) {
+  const id = roomId || v4();
+  const newRoom = new Room(id);
   rooms.set(newRoom.id, newRoom);
-  console.log(`새로운 방이 생성되었습니다. 방 ID: ${newRoom.id}`);
+  logger.info({ roomId: newRoom.id }, '새로운 방 생성');
   getIO().in('lobby').emit('updateLobby', getJoinableRooms());
   return newRoom;
 }
@@ -24,7 +26,7 @@ export function getRoomById(roomId) {
 export function cleanRoom() {
   rooms.forEach((room, id) => {
     if (room.players.length === 0) {
-      console.log(`방 ${id}이(가) 삭제되었습니다.`);
+      logger.info({ roomId: id }, '방 삭제');
       rooms.delete(id);
     }
   });
