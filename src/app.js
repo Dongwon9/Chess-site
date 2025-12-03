@@ -4,7 +4,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { initSocket } from './ws/server.js';
 import lobbyRouter from './routes/lobby.router.js';
-import roomRouter from './routes/room.router.js';
 import session from 'express-session';
 import { requestLogger } from './middleware/requestLogger.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -36,7 +35,6 @@ app.use(
 );
 
 app.use('/lobby', lobbyRouter);
-app.use('/room', roomRouter);
 
 app.get('/', (req, res) => {
   res.redirect('lobby.html');

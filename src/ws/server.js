@@ -1,77 +1,76 @@
 import { Server } from 'socket.io';
-import { cleanRoom, createRoom, getJoinableRooms, getRoomById } from '../services/lobby.service.js';
+import {
+  createRoom,
+  getJoinableRooms,
+  getRoomById,
+} from '../services/lobby.service.js';
 import logger from '../utils/logger.js';
 import { setupRoomHandlers } from './room.handler.js';
-let io;
+let wss;
 
 function initSocket(server) {
-  io = new Server(server, {
+  wss = new Server(server, {
     cors: {
       origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
       methods: ['GET', 'POST'],
     },
   });
 
-  io.on('connection', (socket) => {
+  wss.on('connection', (socket) => {
     logger.debug({ socketId: socket.id }, '새 클라이언트 연결');
-    const { toRoom, nickname } = socket.handshake.query;
+    setupClientHandlers(socket);
+    const { location } = socket.handshake.query;
+    if (location === 'lobby') return;
+    setupRoomHandlers(socket);
+  });
+  return wss;
+}
 
-    if (!toRoom) {
-      logger.warn({ socketId: socket.id }, '방 정보 없이 연결 시도');
-      return;
-    }
+function setupClientHandlers(socket) {
+  const { location, nickname } = socket.handshake.query;
 
-    socket.join(toRoom);
-    logger.debug({ socketId: socket.id, room: toRoom, nickname }, '클라이언트 방 입장');
+  if (!location) {
+    logger.warn({ socketId: socket.id }, '방 정보 없이 연결 시도');
+    return;
+  }
 
-    if (toRoom === 'lobby') {
-      io.in('lobby').emit('updateLobby', getJoinableRooms());
-      return;
-    }
+  socket.join(location);
+  wss.in('lobby').emit('updateLobby', getJoinableRooms());
+  logger.debug(
+    { socketId: socket.id, rooms: getJoinableRooms() },
+    '로비 참가자에게 참가 가능한 방 목록 전송',
+  );
 
-    let room = getRoomById(toRoom);
-    if (!room) {
-      room = createRoom(toRoom);
-      logger.info({ socketId: socket.id, room: toRoom }, '존재하지 않는 방에 연결 시도, 새로 생성');
-    }
+  const room = location !== 'lobby' ? getRoomById(location) : null;
 
-    try {
-      room.join(nickname);
-      io.in(toRoom).emit('updateRoom', room.getRoomInfo());
-      logger.info({ socketId: socket.id, room: toRoom, nickname }, '방 입장 성공');
-    } catch (error) {
-      logger.error({ socketId: socket.id, room: toRoom, error: error.message }, '방 입장 실패');
-      socket.emit('error', { message: error.message });
-      socket.disconnect();
-      return;
-    }
-
-    socket.on('disconnect', () => {
-      logger.info({ socketId: socket.id, room: toRoom, nickname }, '클라이언트 연결 해제');
-      if (toRoom !== 'lobby' && room) {
-        room.leaveRoom(nickname);
-        io.in(toRoom).emit('updateRoom', room.getRoomInfo());
-        if (room.players.length === 0) {
-          logger.debug({ room: toRoom }, '빈 방 정리 예약');
-          cleanRoom();
-        }
+  socket.on('disconnect', () => {
+    logger.info(
+      { socketId: socket.id, room: location, nickname },
+      '클라이언트 연결 해제',
+    );
+    if (location !== 'lobby' && room) {
+      room.leaveRoom(nickname);
+      wss.in(location).emit('updateRoom', room.getRoomInfo());
+      if (room.players.length === 0) {
+        logger.debug({ room: location }, '빈 방 정리 예약');
+        cleanRoom();
       }
-    });
-
-    // 방별 이벤트 핸들러 등록
-    if (toRoom !== 'lobby') {
-      setupRoomHandlers(socket, io);
     }
   });
 
-  return io;
+  socket.onAny((event, ...args) => {
+    logger.debug(
+      { socketId: socket.id, event, args },
+      '클라이언트가 이벤트 수신',
+    );
+  });
 }
 
 function getIO() {
-  if (!io) {
+  if (!wss) {
     initSocket();
   }
-  return io;
+  return wss;
 }
 
 export { initSocket, getIO };

@@ -7,7 +7,7 @@ const server = getIO();
 router.post('/create-room', (req, res) => {
   const room = createRoom();
   server.in('lobby').emit('updateLobby', getJoinableRooms());
-  res.redirect(303, `/room.html?id=${room.id}`);
+  res.json({ success: true, roomId: room.id });
 });
 
 export default router;

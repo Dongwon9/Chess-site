@@ -68,7 +68,10 @@ export class Room {
 
     try {
       this.board.move(move);
-      logger.info({ roomId: this.id, nickname, move: move.from + move.to }, '기물 이동');
+      logger.info(
+        { roomId: this.id, nickname, move: move.from + move.to },
+        '기물 이동',
+      );
 
       const result = {
         fen: this.board.fen(),
@@ -82,7 +85,10 @@ export class Room {
 
       return result;
     } catch (error) {
-      logger.warn({ roomId: this.id, nickname, move, error: error.message }, '잘못된 이동 시도');
+      logger.warn(
+        { roomId: this.id, nickname, move, error: error.message },
+        '잘못된 이동 시도',
+      );
       return { error: '잘못된 이동입니다' };
     }
   }
@@ -95,7 +101,7 @@ export class Room {
       throw new Error('Nickname is required');
     }
     if (this.players.find((p) => p.nickname === nickname)) {
-      logger.debug({ roomId: this.id, nickname }, '이미 참가한 플레이어');
+      logger.error({ roomId: this.id, nickname }, '이미 참가한 플레이어');
       return;
     }
     if (this.players.length >= 2) {
@@ -105,7 +111,10 @@ export class Room {
       throw new Error('게임이 진행 중입니다');
     }
     this.players.push({ nickname, isReady: false });
-    logger.info({ roomId: this.id, nickname, playerCount: this.players.length }, '플레이어 입장');
+    logger.info(
+      { roomId: this.id, nickname, playerCount: this.players.length },
+      '플레이어 입장',
+    );
   }
 
   leaveRoom(nickname) {
@@ -118,10 +127,21 @@ export class Room {
 
   getRoomInfo() {
     return {
-      boardFen: this.board.fen(),
-      players: this.players,
-      isPlaying: this.isPlaying,
-      whitePlayer: this.whitePlayer,
+      gameData: {
+        boardFen: this.board.fen(),
+        turn: this.board.turn(),
+      },
+      playerData: {
+        players: this.players,
+        isPlaying: this.isPlaying,
+        whitePlayer: this.whitePlayer,
+      },
     };
+  }
+
+  isMyTurn(nickname) {
+    const isPlayerWhite = this.isWhite(nickname);
+    const isWhiteTurn = this.board.turn() === 'w';
+    return isPlayerWhite === isWhiteTurn;
   }
 }

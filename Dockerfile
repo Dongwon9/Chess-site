@@ -1,5 +1,5 @@
 # 개발 환경용 Dockerfile
-FROM node:current-alpine
+FROM node:24-alpine
 
 # 작업 디렉토리 설정
 WORKDIR /app

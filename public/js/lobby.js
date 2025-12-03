@@ -2,18 +2,19 @@ import { io } from 'https://esm.sh/socket.io-client';
 import { getNickname } from './getNickname.js';
 const socket = io({
   query: {
-    toRoom: 'lobby',
+    location: 'lobby',
   },
 });
 let nickname = getNickname();
 document.getElementById('nickname').innerText = nickname;
 
 document.getElementById('createRoom').addEventListener('click', async () => {
-  const { id } = await fetch('/lobby/create-room', {
+  const response = await fetch('/lobby/create-room', {
     method: 'POST',
   });
-  if (id) {
-    window.location.href = `/room.html?id=${id}`;
+  const data = await response.json();
+  if (data.success) {
+    window.location.href = `/room.html?id=${data.roomId}`;
   }
 });
 
