@@ -9,51 +9,98 @@ import { errorHandler } from './middleware/errorHandler.js';
 import logger from './utils/logger.js';
 import { config } from './config/env.js';
 
-const PORT = config.port;
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Middleware: Static files
 app.use(express.static('public'));
+
+// Middleware: Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Middleware: Request logging
 app.use(requestLogger);
+
+// Middleware: Session management
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'asdsad',
+    secret: config.sessionSecret,
     resave: false,
     saveUninitialized: true,
     cookie: {
-      maxAge: 1000 * 60 * 60, // 1 hour
+      maxAge: config.sessionMaxAge,
+      httpOnly: config.isProduction,
+      secure: config.isProduction,
+      sameSite: 'strict',
     },
   }),
 );
 
+// Routes
 app.use('/lobby', lobbyRouter);
 
+// Root route redirect
 app.get('/', (req, res) => {
   res.redirect('lobby.html');
 });
-// Server startup
-const server = app.listen(PORT, () => {
-  logger.info({ port: PORT }, 'server started');
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
-// Initialize WebSocket server after HTTP server starts
-initSocket(server);
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    logger.info('Server closed');
-    process.exit(0);
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Not found',
   });
 });
 
 // Error handling middleware (should be last)
 app.use(errorHandler);
+
+// Server startup
+const server = app.listen(config.port, () => {
+  logger.info({ port: config.port }, 'HTTP server started');
+});
+
+// Initialize WebSocket server after HTTP server starts
+initSocket(server);
+logger.info('WebSocket server initialized');
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, shutting down gracefully');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+// Uncaught exception handler
+process.on('uncaughtException', (error) => {
+  logger.error(
+    { error: error.message, stack: error.stack },
+    'Uncaught exception',
+  );
+  process.exit(1);
+});
+
+// Unhandled rejection handler
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error({ reason, promise }, 'Unhandled promise rejection');
+});
 
 export default app;

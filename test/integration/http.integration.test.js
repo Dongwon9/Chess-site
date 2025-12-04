@@ -4,12 +4,12 @@ import assert from 'node:assert/strict';
 let serverProcess;
 const baseUrl = 'http://localhost:3000';
 
-async function waitForServer(timeoutMs = 3000) {
+async function waitForServer(timeoutMs = 5000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
-      const res = await fetch(baseUrl + '/');
-      if (res.ok || res.redirected) return true;
+      const res = await fetch(baseUrl + '/health');
+      if (res.ok) return true;
     } catch (_) {}
     await new Promise((r) => setTimeout(r, 100));
   }
@@ -28,7 +28,7 @@ describe('HTTP 통합 테스트', () => {
         NODE_ENV: 'test',
         LOG_LEVEL: 'error',
       },
-      stdio: 'inherit',
+      stdio: 'pipe',
     });
     await waitForServer(5000);
   });
@@ -37,15 +37,30 @@ describe('HTTP 통합 테스트', () => {
     if (serverProcess) serverProcess.kill('SIGTERM');
   });
 
-  it('POST /lobby/create-room 은 방을 생성하고 roomId를 반환해야 한다', () => {
-    const res = fetch(baseUrl + '/lobby/create-room', {
+  it('POST /lobby/create-room 은 방을 생성하고 roomId를 반환해야 한다', async () => {
+    const res = await fetch(baseUrl + '/lobby/create-room', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     });
     assert.equal(res.ok, true);
-    const data = res.json();
+    const data = await res.json();
     assert.equal(data.success, true);
     assert.ok(typeof data.roomId === 'string');
+  });
+
+  it('GET /lobby/rooms 는 참여 가능한 방 목록을 반환해야 한다', async () => {
+    const res = await fetch(baseUrl + '/lobby/rooms');
+    assert.equal(res.ok, true);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.ok(Array.isArray(data.rooms));
+  });
+
+  it('GET /health 는 서버 상태를 반환해야 한다', async () => {
+    const res = await fetch(baseUrl + '/health');
+    assert.equal(res.ok, true);
+    const data = await res.json();
+    assert.equal(data.status, 'ok');
   });
 });
