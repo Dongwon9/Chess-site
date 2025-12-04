@@ -3,7 +3,7 @@ import { Chess } from 'chess.js';
 import logger from '../utils/logger.js';
 import { v4 } from 'uuid';
 import { deleteRoom } from './lobby.service.js';
-
+//TODO 게임 종료 로직
 export class Room {
   constructor(id = null) {
     this.id = id ?? v4();

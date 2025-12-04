@@ -1,10 +1,12 @@
 import { io } from 'https://esm.sh/socket.io-client';
 import { getNickname } from './getNickname.js';
+
 const socket = io({
   query: {
     location: 'lobby',
   },
 });
+
 let nickname = getNickname();
 document.getElementById('nickname').innerText = nickname;
 
@@ -26,23 +28,38 @@ document.getElementById('createRoom').addEventListener('click', async () => {
 
 socket.on('updateLobby', (rooms) => {
   const roomList = document.getElementById('roomList');
+  const emptyState = document.getElementById('emptyState');
+
   roomList.innerHTML = '';
+
   if (rooms.length === 0) {
-    const li = document.createElement('li');
-    li.innerText = '방이 없습니다.';
-    roomList.appendChild(li);
+    emptyState.style.display = 'block';
     return;
   }
 
+  emptyState.style.display = 'none';
+
   rooms.forEach((roomId) => {
     const li = document.createElement('li');
-    li.innerText = roomId;
+    li.className = 'room-item';
+
+    const roomName = document.createElement('span');
+    roomName.className = 'room-item-name';
+    roomName.innerText = roomId;
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'room-item-button';
+
     const button = document.createElement('button');
+    button.className = 'btn-primary';
     button.innerText = '입장';
     button.onclick = () => {
       window.location.href = `/room.html?id=${roomId}`;
     };
-    li.appendChild(button);
+
+    buttonContainer.appendChild(button);
+    li.appendChild(roomName);
+    li.appendChild(buttonContainer);
     roomList.appendChild(li);
   });
 });
