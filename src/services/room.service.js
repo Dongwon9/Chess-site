@@ -11,13 +11,14 @@ export class Room {
     this.isPlaying = false;
   }
 
-  setPlayerReady(nickname, isReady) {
+  setPlayerReady(nickname, isReady = undefined) {
     const player = this.players.find((p) => p.nickname === nickname);
-    if (player) {
-      player.isReady = isReady;
-    } else {
+    if (!player) {
       throw new Error(`Player not found: ${nickname}`);
     }
+    // If isReady is not provided, toggle the current state
+    player.isReady = isReady !== undefined ? isReady : !player.isReady;
+    return player.isReady;
   }
 
   startGame() {

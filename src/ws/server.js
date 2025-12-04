@@ -18,10 +18,12 @@ function initSocket(server) {
 
   wss.on('connection', (socket) => {
     logger.debug({ socketId: socket.id }, '새 클라이언트 연결');
-    setupClientHandlers(socket);
     const { location } = socket.handshake.query;
-    if (location === 'lobby') return;
-    setupRoomHandlers(socket);
+    socket.join(location);
+    setupClientHandlers(socket);
+    if (location !== 'lobby') {
+      setupRoomHandlers(socket, wss);
+    }
   });
   return wss;
 }
@@ -34,7 +36,6 @@ function setupClientHandlers(socket) {
     return;
   }
 
-  socket.join(location);
   wss.in('lobby').emit('updateLobby', getJoinableRooms());
   logger.debug(
     { socketId: socket.id, rooms: getJoinableRooms() },
@@ -45,17 +46,13 @@ function setupClientHandlers(socket) {
 
   socket.on('disconnect', () => {
     logger.info(
-      { socketId: socket.id, room: location, nickname },
+      { socketId: socket.id, location, nickname },
       '클라이언트 연결 해제',
     );
-    if (location !== 'lobby' && room) {
-      room.leaveRoom(nickname);
-      wss.in(location).emit('updateRoom', room.getRoomInfo());
-      if (room.players.length === 0) {
-        logger.debug({ room: location }, '빈 방 정리 예약');
-        cleanRoom();
-      }
+    if (location === 'lobby' || !room) {
+      return;
     }
+    room.leave(nickname);
   });
 
   socket.onAny((event, ...args) => {

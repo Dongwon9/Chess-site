@@ -1,5 +1,4 @@
 import express from 'express';
-import { createServer } from 'node:http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { initSocket } from './ws/server.js';
@@ -16,8 +15,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const server = createServer(app);
-const wsServer = initSocket(server);
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -40,9 +37,12 @@ app.get('/', (req, res) => {
   res.redirect('lobby.html');
 });
 // Server startup
-server.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info({ port: PORT }, 'server started');
 });
+
+// Initialize WebSocket server after HTTP server starts
+initSocket(server);
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

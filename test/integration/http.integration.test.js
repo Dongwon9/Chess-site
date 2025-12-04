@@ -16,7 +16,7 @@ async function waitForServer(timeoutMs = 3000) {
   throw new Error('Server did not start in time');
 }
 
-describe('HTTP Integration', () => {
+describe('HTTP 통합 테스트', () => {
   before(async () => {
     // Start app as a child process
     const { spawn } = await import('node:child_process');
@@ -37,14 +37,14 @@ describe('HTTP Integration', () => {
     if (serverProcess) serverProcess.kill('SIGTERM');
   });
 
-  it('POST /lobby/create-room should create a room and return roomId', async () => {
-    const res = await fetch(baseUrl + '/lobby/create-room', {
+  it('POST /lobby/create-room 은 방을 생성하고 roomId를 반환해야 한다', () => {
+    const res = fetch(baseUrl + '/lobby/create-room', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     });
     assert.equal(res.ok, true);
-    const data = await res.json();
+    const data = res.json();
     assert.equal(data.success, true);
     assert.ok(typeof data.roomId === 'string');
   });

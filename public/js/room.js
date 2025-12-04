@@ -6,6 +6,7 @@ if (!roomId) {
   alert('유효하지 않은 방 ID입니다.');
   window.location.href = '/lobby.html';
 }
+console.log('방 ID:', roomId);
 const nickname = getNickname();
 document.getElementById('myName').innerText = nickname;
 const socket = io({
@@ -14,6 +15,7 @@ const socket = io({
     nickname,
   },
 });
+playerReady();
 
 const opponentNameElement = document.getElementById('opponentName');
 const opponentReadyElement = document.getElementById('opponentReady');
@@ -24,14 +26,24 @@ const board = Chessboard('chessBoard', {
   draggable: false,
 });
 
-readyButton.addEventListener('click', () => {
-  socket.emit('playerReady', { nickname, roomId }, (data) => {
-    const { gameData, playerData } = data;
-    const opponent = playerData.players.find((p) => p.nickname !== nickname);
-    const me = playerData.players.find((p) => p.nickname === nickname);
+readyButton.addEventListener('click', playerReady);
+
+function playerReady() {
+  socket.emit('playerReady', { nickname, roomId });
+}
+
+socket.on('updateRoom', (data) => {
+  const { gameData, playerData } = data;
+  const opponent = playerData.players.find((p) => p.nickname !== nickname);
+  const me = playerData.players.find((p) => p.nickname === nickname);
+  if (!opponent) {
+    opponentNameElement.innerText = '상대를 기다리는 중...';
+    opponentReadyElement.innerText = '';
+  } else {
     opponentNameElement.innerText = opponent.nickname;
     opponentReadyElement.innerText = opponent.isReady ? '준비 완료' : '대기 중';
-    meReadyElement.innerText = me.isReady ? '준비 완료' : '대기 중';
-    readyButton.innerText = me.isReady ? '준비 취소' : '준비 완료';
-  });
+  }
+
+  meReadyElement.innerText = me.isReady ? '준비 완료' : '대기 중';
+  readyButton.innerText = me.isReady ? '준비 취소' : '준비 완료';
 });

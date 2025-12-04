@@ -93,6 +93,29 @@ describe('Room Service', () => {
       assert.equal(player.isReady, false);
     });
 
+    it('isReady를 제공하지 않으면 현재 상태를 토글해야 함', () => {
+      const player = room.players.find((p) => p.nickname === 'player1');
+      assert.equal(player.isReady, false);
+
+      // Toggle to true
+      const newState1 = room.setPlayerReady('player1');
+      assert.equal(newState1, true);
+      assert.equal(player.isReady, true);
+
+      // Toggle to false
+      const newState2 = room.setPlayerReady('player1');
+      assert.equal(newState2, false);
+      assert.equal(player.isReady, false);
+    });
+
+    it('setPlayerReady는 새로운 준비 상태를 반환해야 함', () => {
+      const result = room.setPlayerReady('player1', true);
+      assert.equal(result, true);
+
+      const result2 = room.setPlayerReady('player2', false);
+      assert.equal(result2, false);
+    });
+
     it('존재하지 않는 플레이어의 준비 상태 변경 시 에러를 던져야 함', () => {
       assert.throws(() => {
         room.setPlayerReady('nonexistent', true);

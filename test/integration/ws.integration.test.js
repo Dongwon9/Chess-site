@@ -17,7 +17,7 @@ async function waitForServer(timeoutMs = 3000) {
   throw new Error('Server did not start in time');
 }
 
-describe('WebSocket Integration', () => {
+describe('웹소켓 통합 테스트', () => {
   before(async () => {
     const { spawn } = await import('node:child_process');
     serverProcess = spawn('node', ['./src/app.js'], {
@@ -37,7 +37,7 @@ describe('WebSocket Integration', () => {
     if (serverProcess) serverProcess.kill('SIGTERM');
   });
 
-  it('Client connects to lobby and receives updateLobby', async () => {
+  it('클라이언트가 로비에 연결되고 updateLobby를 수신한다', async () => {
     const socket = io(baseUrl, {
       query: { location: 'lobby', nickname: 'tester' },
     });
@@ -58,25 +58,151 @@ describe('WebSocket Integration', () => {
     socket.close();
   });
 
-  it('Client joins room and playerReady callback returns room info', async () => {
+  it('클라이언트가 방에 입장하고 playerReady 콜백으로 방 정보를 받는다', async () => {
     // Create a room first via HTTP
     const res = await fetch(baseUrl + '/lobby/create-room', { method: 'POST' });
     const { roomId } = await res.json();
 
-    const socket = io(baseUrl, { query: { location: roomId, nickname: 'p1' } });
+    const socket = io(baseUrl, {
+      query: { location: roomId, nickname: 'p1' },
+    });
 
     const callbackResult = await new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('timeout')), 3000);
       socket.on('connect', () => {
-        socket.emit('playerReady', { nickname: 'p1', roomId }, (roomInfo) => {
-          clearTimeout(timer);
-          resolve(roomInfo);
+        socket.emit(
+          'playerReady',
+          { nickname: 'p1', roomId, isReady: true },
+          (response) => {
+            clearTimeout(timer);
+            resolve(response);
+          },
+        );
+      });
+    });
+
+    assert.equal(callbackResult.success, true);
+    assert.equal(callbackResult.isReady, true);
+    assert.equal(typeof callbackResult.roomInfo, 'object');
+    assert.equal(
+      Array.isArray(callbackResult.roomInfo.playerData.players),
+      true,
+    );
+    socket.close();
+  });
+
+  it('준비 상태를 토글할 수 있다 (isReady 미제공 시)', async () => {
+    const res = await fetch(baseUrl + '/lobby/create-room', { method: 'POST' });
+    const { roomId } = await res.json();
+
+    const socket = io(baseUrl, {
+      query: { location: roomId, nickname: 'p1' },
+    });
+
+    const results = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('timeout')), 5000);
+      const states = [];
+
+      socket.on('connect', () => {
+        // First toggle (should set to true)
+        socket.emit('playerReady', { nickname: 'p1', roomId }, (response) => {
+          states.push(response.isReady);
+
+          // Second toggle (should set to false)
+          socket.emit(
+            'playerReady',
+            { nickname: 'p1', roomId },
+            (response2) => {
+              states.push(response2.isReady);
+              clearTimeout(timer);
+              resolve(states);
+            },
+          );
         });
       });
     });
 
-    assert.equal(typeof callbackResult, 'object');
-    assert.equal(Array.isArray(callbackResult.players), true);
+    assert.equal(results[0], true);
+    assert.equal(results[1], false);
+    socket.close();
+  });
+
+  it('준비 상태 변경이 방의 모든 클라이언트에게 브로드캐스트된다', async () => {
+    const res = await fetch(baseUrl + '/lobby/create-room', { method: 'POST' });
+    const { roomId } = await res.json();
+
+    const socket1 = io(baseUrl, {
+      query: { location: roomId, nickname: 'p1' },
+    });
+    const socket2 = io(baseUrl, {
+      query: { location: roomId, nickname: 'p2' },
+    });
+
+    const updateReceived = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('timeout')), 5000);
+      let socket1Connected = false;
+      let socket2Connected = false;
+
+      socket1.on('connect', () => {
+        socket1Connected = true;
+        checkBothConnected();
+      });
+
+      socket2.on('connect', () => {
+        socket2Connected = true;
+        checkBothConnected();
+      });
+
+      function checkBothConnected() {
+        if (socket1Connected && socket2Connected) {
+          // socket2 listens for updates
+          socket2.on('updateRoom', (roomInfo) => {
+            clearTimeout(timer);
+            resolve(roomInfo);
+          });
+
+          // socket1 changes ready state
+          setTimeout(() => {
+            socket1.emit('playerReady', {
+              nickname: 'p1',
+              roomId,
+              isReady: true,
+            });
+          }, 100);
+        }
+      }
+    });
+
+    assert.equal(typeof updateReceived, 'object');
+    const player1 = updateReceived.playerData.players.find(
+      (p) => p.nickname === 'p1',
+    );
+    assert.equal(player1.isReady, true);
+
+    socket1.close();
+    socket2.close();
+  });
+
+  it('존재하지 않는 방에 준비 요청 시 에러를 반환한다', async () => {
+    const socket = io(baseUrl, {
+      query: { location: 'nonexistent-room', nickname: 'p1' },
+    });
+
+    const errorResponse = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('timeout')), 3000);
+      socket.on('connect', () => {
+        socket.emit(
+          'playerReady',
+          { nickname: 'p1', roomId: 'nonexistent-room-id', isReady: true },
+          (response) => {
+            clearTimeout(timer);
+            resolve(response);
+          },
+        );
+      });
+    });
+
+    assert.equal(typeof errorResponse.error, 'string');
     socket.close();
   });
 });
