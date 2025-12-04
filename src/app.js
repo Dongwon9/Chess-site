@@ -68,9 +68,26 @@ const server = app.listen(config.port, () => {
   logger.info({ port: config.port }, 'HTTP server started');
 });
 
+// Handle server errors
+server.on('error', (error) => {
+  logger.error({ error: error.message, stack: error.stack }, 'Server error');
+  if (error.code === 'EADDRINUSE') {
+    logger.error(`Port ${config.port} is already in use`);
+    process.exit(1);
+  }
+});
+
 // Initialize WebSocket server after HTTP server starts
-initSocket(server);
-logger.info('WebSocket server initialized');
+try {
+  initSocket(server);
+  logger.info('WebSocket server initialized');
+} catch (error) {
+  logger.error(
+    { error: error.message, stack: error.stack },
+    'Failed to initialize WebSocket server',
+  );
+  process.exit(1);
+}
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

@@ -45,63 +45,17 @@ export function setupRoomHandlers(socket, wss) {
   /**
    * 플레이어 준비 상태 변경
    */
-  socket.on('playerReady', ({ isReady }, callback) => {
-    try {
-      if (typeof isReady !== 'boolean') {
-        throw new Error('isReady must be a boolean');
-      }
-
-      const updatedReady = room.setPlayerReady(nickname, isReady);
-      const roomInfo = room.getRoomInfo();
-
-      wss.in(roomId).emit('updateRoom', roomInfo);
-
-      if (callback && typeof callback === 'function') {
-        callback({ success: true, isReady: updatedReady, roomInfo });
-      }
-
-      logger.info(
-        { roomId, nickname, isReady: updatedReady },
-        '플레이어 준비 상태 변경 완료',
-      );
-    } catch (error) {
-      logger.error(
-        { roomId, nickname, error: error.message },
-        '준비 상태 변경 실패',
-      );
-
-      if (callback && typeof callback === 'function') {
-        callback({ error: error.message });
-      }
+  socket.on('togglePlayerReady', (data) => {
+    const { nickname, roomId } = data;
+    const room = getRoomById(roomId);
+    if (!room) {
+      logger.error({ roomId }, '방을 찾을 수 없습니다');
+      return;
     }
-  });
 
-  /**
-   * 게임 시작
-   */
-  socket.on('startGame', (payload, callback) => {
-    try {
-      room.startGame();
-      const roomInfo = room.getRoomInfo();
-
-      wss.in(roomId).emit('updateRoom', roomInfo);
-      wss.in(roomId).emit('gameStarted', roomInfo);
-
-      if (callback && typeof callback === 'function') {
-        callback({ success: true, roomInfo });
-      }
-
-      logger.info(
-        { roomId, players: room.players.map((p) => p.nickname) },
-        '게임 시작됨',
-      );
-    } catch (error) {
-      logger.error({ roomId, error: error.message }, '게임 시작 실패');
-
-      if (callback && typeof callback === 'function') {
-        callback({ error: error.message });
-      }
-    }
+    const isReady = room.togglePlayerReady(nickname);
+    wss.in(roomId).emit('updateRoom', room.getRoomInfo());
+    logger.info({ roomId, nickname, isReady }, '플레이어 준비 상태 변경 완료');
   });
 
   /**
@@ -156,81 +110,19 @@ export function setupRoomHandlers(socket, wss) {
     }
   });
 
-  /**
-   * 플레이어 연결 해제
-   */
   socket.on('disconnect', () => {
-    try {
-      room.leave(nickname);
-      logger.info(
-        {
-          socketId: socket.id,
-          roomId,
-          nickname,
-          remainingPlayers: room.players.length,
-        },
-        '플레이어 연결 해제',
-      );
-
-      // Notify other players in the room
-      wss.in(roomId).emit('playerDisconnected', {
+    room.leave(nickname);
+    logger.info(
+      {
+        socketId: socket.id,
+        roomId,
         nickname,
         remainingPlayers: room.players.length,
-      });
-
-      // If no players left, delete the room
-      if (room.players.length === 0) {
-        deleteRoom(roomId);
-        logger.info({ roomId }, '플레이어 없음으로 방 삭제');
-      } else {
-        wss.in(roomId).emit('updateRoom', room.getRoomInfo());
-      }
-    } catch (error) {
-      logger.error(
-        { roomId, nickname, error: error.message },
-        '연결 해제 처리 중 에러',
-      );
-    }
+      },
+      '플레이어 연결 해제',
+    );
   });
 
-  /**
-   * 게임 포기
-   */
-  socket.on('surrenderGame', (payload, callback) => {
-    try {
-      if (!room.isPlaying) {
-        throw new Error('Game is not in progress');
-      }
-
-      const winner = room.isWhite(nickname) ? 'black' : 'white';
-      const endResult = room.endGame(winner);
-
-      wss.in(roomId).emit('gameEnded', {
-        ...endResult,
-        reason: '항복',
-      });
-
-      if (callback && typeof callback === 'function') {
-        callback({ success: true, reason: '항복' });
-      }
-
-      deleteRoom(roomId);
-      logger.info({ roomId, nickname, winner }, '플레이어 항복');
-    } catch (error) {
-      logger.error(
-        { roomId, nickname, error: error.message },
-        '게임 포기 실패',
-      );
-
-      if (callback && typeof callback === 'function') {
-        callback({ error: error.message });
-      }
-    }
-  });
-
-  /**
-   * 에러 처리
-   */
   socket.on('error', (error) => {
     logger.error(
       { socketId: socket.id, roomId, nickname, error },

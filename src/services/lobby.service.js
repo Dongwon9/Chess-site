@@ -1,9 +1,13 @@
-import { getIO } from '../ws/server.js';
 import { Room } from './room.service.js';
-import { v4 } from 'uuid';
 import logger from '../utils/logger.js';
 
 const rooms = new Map();
+
+// Lazy import to avoid circular dependency
+async function getIO() {
+  const module = await import('../ws/server.js');
+  return module.getIO();
+}
 
 /**
  * 새로운 방 생성
@@ -11,31 +15,26 @@ const rooms = new Map();
  * @returns {Room} 생성된 방
  */
 export function createRoom(roomId = null) {
-  try {
-    const id = roomId || v4();
+  const newRoom = new Room(roomId);
+  rooms.set(newRoom.id, newRoom);
+  logger.info({ roomId: newRoom.id }, '새로운 방 생성');
+  // Broadcast updated lobby - use sync version for internal reference
+  notifyLobbyUpdate();
 
-    if (typeof id !== 'string' || !id.trim()) {
-      throw new Error('Invalid room ID');
+  return newRoom;
+}
+
+/**
+ * Notify lobby clients of room list update
+ */
+export function notifyLobbyUpdate() {
+  import('../ws/server.js').then((module) => {
+    try {
+      module.getIO().in('lobby').emit('updateLobby', getJoinableRooms());
+    } catch (error) {
+      logger.debug({ error: error.message }, 'Failed to notify lobby update');
     }
-
-    // Check if room already exists
-    if (rooms.has(id)) {
-      logger.warn({ roomId: id }, '이미 존재하는 방입니다');
-      return rooms.get(id);
-    }
-
-    const newRoom = new Room(id);
-    rooms.set(newRoom.id, newRoom);
-    logger.info({ roomId: newRoom.id }, '새로운 방 생성');
-
-    // Broadcast updated lobby
-    getIO().in('lobby').emit('updateLobby', getJoinableRooms());
-
-    return newRoom;
-  } catch (error) {
-    logger.error({ error: error.message }, '방 생성 실패');
-    throw error;
-  }
+  });
 }
 
 /**
@@ -115,7 +114,6 @@ export function joinRoomById(roomId, nickname) {
     }
 
     room.join(nickname);
-    logger.debug({ roomId, nickname }, '방 참가 성공');
   } catch (error) {
     logger.error({ roomId, nickname, error: error.message }, '방 참가 실패');
     throw error;
@@ -147,11 +145,7 @@ export function deleteRoom(id) {
   }
 
   // Broadcast updated lobby
-  try {
-    getIO().in('lobby').emit('updateLobby', getJoinableRooms());
-  } catch (error) {
-    logger.error({ error: error.message }, '로비 업데이트 실패');
-  }
+  notifyLobbyUpdate();
 }
 
 /**

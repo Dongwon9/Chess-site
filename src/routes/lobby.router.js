@@ -4,8 +4,8 @@ import {
   getJoinableRooms,
   getRoomById,
   getAllRooms,
+  notifyLobbyUpdate,
 } from '../services/lobby.service.js';
-import { getIO } from '../ws/server.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
@@ -36,8 +36,8 @@ router.post('/create-room', (req, res, next) => {
     }
 
     const room = createRoom(roomName || undefined);
-    const io = getIO();
-    io.in('lobby').emit('updateLobby', getJoinableRooms());
+    // Notification is already called in createRoom
+    notifyLobbyUpdate();
 
     logger.info({ roomId: room.id, roomName }, '새 방 생성됨');
 
