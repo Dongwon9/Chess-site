@@ -58,58 +58,6 @@ export function setupRoomHandlers(socket, wss) {
     logger.info({ roomId, nickname, isReady }, '플레이어 준비 상태 변경 완료');
   });
 
-  /**
-   * 기물 이동
-   */
-  socket.on('makeMove', ({ move }, callback) => {
-    try {
-      if (!move) {
-        throw new Error('Move information is required');
-      }
-
-      const result = room.makeMove(move, nickname);
-
-      if (result.error) {
-        if (callback && typeof callback === 'function') {
-          callback(result);
-        }
-        return;
-      }
-
-      // Broadcast move to all players in the room
-      wss.in(roomId).emit('moveMade', {
-        move: result.move,
-        fen: result.fen,
-        turn: result.turn,
-        gameOver: result.gameOver,
-        winner: result.winner,
-      });
-
-      if (callback && typeof callback === 'function') {
-        callback({ success: true, ...result });
-      }
-
-      // If game is over, emit gameEnded event
-      if (result.gameOver) {
-        const endResult = room.endGame(result.winner);
-        wss.in(roomId).emit('gameEnded', endResult);
-
-        // Delete room after game ends
-        deleteRoom(roomId);
-        logger.info({ roomId }, '게임 종료 후 방 삭제');
-      }
-    } catch (error) {
-      logger.error(
-        { roomId, nickname, move: payload?.move, error: error.message },
-        '이동 처리 중 에러',
-      );
-
-      if (callback && typeof callback === 'function') {
-        callback({ error: error.message });
-      }
-    }
-  });
-
   socket.on('disconnect', () => {
     room.leave(nickname);
     logger.info(
@@ -128,5 +76,23 @@ export function setupRoomHandlers(socket, wss) {
       { socketId: socket.id, roomId, nickname, error },
       'Socket 에러 발생',
     );
+  });
+
+  socket.on('makeMove', (data, callback) => {
+    logger.info(
+      { socketId: socket.id, data, callback },
+      'makeMove 이벤트 수신',
+    );
+    const { roomId, source, target } = data;
+    const room = getRoomById(roomId);
+    const valid = room.makeMove({ source, target });
+    if (valid) {
+      wss.in(roomId).emit('updateRoom', room.getRoomInfo());
+      logger.debug({ roomId, source, target }, '유효한 이동 처리 완료');
+      callback(true);
+    } else {
+      logger.warn({ roomId, source, target }, '유효하지 않은 이동 시도');
+      callback(false);
+    }
   });
 }

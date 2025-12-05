@@ -406,7 +406,7 @@ describe('Room Service', () => {
       const { playerData, gameData } = room.getRoomInfo();
       assert.ok(gameData.boardFen);
       assert.equal(playerData.players.length, 1);
-      assert.equal(playerData.isPlaying, false);
+      assert.equal(gameData.isPlaying, false);
       assert.equal(playerData.whitePlayer, null);
     });
 
@@ -418,7 +418,7 @@ describe('Room Service', () => {
       room.startGame();
 
       const { gameData, playerData } = room.getRoomInfo();
-      assert.equal(playerData.isPlaying, true);
+      assert.equal(gameData.isPlaying, true);
       assert.ok(playerData.whitePlayer);
     });
   });

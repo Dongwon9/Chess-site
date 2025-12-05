@@ -97,10 +97,10 @@ export class Room {
       gameData: {
         boardFen: this.board.fen(),
         turnPlayer: this.getTurnPlayer(),
+        isPlaying: this.isPlaying,
       },
       playerData: {
         players: this.players,
-        isPlaying: this.isPlaying,
       },
     };
   }
@@ -109,5 +109,13 @@ export class Room {
     if (!this.isPlaying) return null;
     const turn = this.board.turn();
     return this.players.find((p) => p.color === turn)?.nickname || null;
+  }
+  makeMove({ source, target }) {
+    try {
+      this.board.move({ from: source, to: target });
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }

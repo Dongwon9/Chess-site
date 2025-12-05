@@ -1,8 +1,7 @@
+import { updateBoard } from './boardManager.js';
 import { getNickname } from './getNickname.js';
 import { io } from 'https://esm.sh/socket.io-client';
-
 const roomId = new URLSearchParams(window.location.search).get('id');
-const EMPTY_BOARD_FEN = '8/8/8/8/8/8/8/8 w - - 0 1';
 
 if (!roomId) {
   alert('유효하지 않은 방 ID입니다.');
@@ -23,14 +22,11 @@ const opponentNameElement = document.getElementById('opponentName');
 const opponentReadyElement = document.getElementById('opponentReady');
 const meReadyElement = document.getElementById('meReady');
 const readyButton = document.getElementById('readyButton');
-//FIXME 말이 드래그가 안됨
-const board = Chessboard('chessBoard', {
-  position: EMPTY_BOARD_FEN,
-  draggable: false,
-});
 
+let roomData = {};
 // 플레이어는 입장하자마자 준비 상태
 playerReady();
+
 readyButton.addEventListener('click', playerReady);
 
 function playerReady() {
@@ -51,10 +47,10 @@ function updateStatusIndicator(element, isReady) {
 }
 
 socket.on('updateRoom', (data) => {
-  console.log(data);
   const { gameData, playerData } = data;
   const opponent = playerData.players.find((p) => p.nickname !== nickname);
   const me = playerData.players.find((p) => p.nickname === nickname);
+  roomData = { gameData, me };
 
   // Update opponent info
   if (!opponent) {
@@ -68,16 +64,19 @@ socket.on('updateRoom', (data) => {
 
   // Update my status
   updateStatusIndicator(meReadyElement, me.isReady);
-  readyButton.innerText = me.isReady ? '준비 취소' : '준비하기';
 
-  // Update board
-  if (playerData.isPlaying) {
-    board.position(gameData.boardFen);
-    board.orientation(me.color === 'w' ? 'white' : 'black');
+  updateBoard();
+
+  if (gameData.isPlaying) {
     readyButton.innerHTML = '게임 진행 중...';
     readyButton.disabled = true;
   } else {
-    board.position(EMPTY_BOARD_FEN);
-    board.orientation('white');
+    readyButton.innerText = me.isReady ? '준비 취소' : '준비하기';
+    readyButton.disabled = false;
   }
 });
+
+function getRoomData() {
+  return roomData;
+}
+export { socket, roomId, getRoomData };

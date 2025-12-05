@@ -45,6 +45,14 @@ describe('Lobby Service', () => {
 
       assert.equal(rooms.length, 1);
     });
+
+    it('2개 이상의 방을 생성할 수 있어야 함', async () => {
+      const room1 = createRoom('room-1');
+      const room2 = createRoom('room-2');
+
+      assert.notEqual(room1.id, room2.id);
+      assert.equal(rooms.length, 2);
+    });
   });
 
   describe('getRoomById()', () => {
