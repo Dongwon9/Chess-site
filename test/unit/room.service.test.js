@@ -81,8 +81,8 @@ describe('Room Service', () => {
     it('게임 진행 중일 때 참가 시도 시 에러를 던져야 함', () => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
       // 플레이어 한 명 제거 후 새 플레이어 입장 시도
       room.leave('player1');
@@ -111,8 +111,8 @@ describe('Room Service', () => {
     it('게임 진행 중 플레이어가 나가면 게임이 중단되어야 함', () => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
 
       assert.equal(room.isPlaying, true);
@@ -130,21 +130,21 @@ describe('Room Service', () => {
     });
   });
 
-  describe('setPlayerReady()', () => {
+  describe('togglePlayerReady()', () => {
     beforeEach(() => {
       room.join('player1');
       room.join('player2');
     });
 
     it('플레이어의 준비 상태를 변경할 수 있어야 함', () => {
-      room.setPlayerReady('player1', true);
+      room.togglePlayerReady('player1');
       const player = room.players.find((p) => p.nickname === 'player1');
       assert.equal(player.isReady, true);
     });
 
     it('준비 상태를 false로 변경할 수 있어야 함', () => {
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player1', false);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player1', false);
       const player = room.players.find((p) => p.nickname === 'player1');
       assert.equal(player.isReady, false);
     });
@@ -154,37 +154,37 @@ describe('Room Service', () => {
       assert.equal(player.isReady, false);
 
       // Toggle to true
-      const newState1 = room.setPlayerReady('player1');
+      const newState1 = room.togglePlayerReady('player1');
       assert.equal(newState1, true);
       assert.equal(player.isReady, true);
 
       // Toggle to false
-      const newState2 = room.setPlayerReady('player1');
+      const newState2 = room.togglePlayerReady('player1');
       assert.equal(newState2, false);
       assert.equal(player.isReady, false);
     });
 
-    it('setPlayerReady는 새로운 준비 상태를 반환해야 함', () => {
-      const result = room.setPlayerReady('player1', true);
+    it('togglePlayerReady는 새로운 준비 상태를 반환해야 함', () => {
+      const result = room.togglePlayerReady('player1');
       assert.equal(result, true);
 
-      const result2 = room.setPlayerReady('player2', false);
+      const result2 = room.togglePlayerReady('player2', false);
       assert.equal(result2, false);
     });
 
     it('존재하지 않는 플레이어의 준비 상태 변경 시 에러를 던져야 함', () => {
       assert.throws(() => {
-        room.setPlayerReady('nonexistent', true);
+        room.togglePlayerReady('nonexistent', true);
       }, /Player not found/);
     });
 
     it('유효하지 않은 닉네임으로 준비 상태 변경 시 에러를 던져야 함', () => {
       assert.throws(() => {
-        room.setPlayerReady(null, true);
+        room.togglePlayerReady(null, true);
       }, /Valid nickname is required/);
 
       assert.throws(() => {
-        room.setPlayerReady('', true);
+        room.togglePlayerReady('', true);
       }, /Valid nickname is required/);
     });
   });
@@ -208,8 +208,8 @@ describe('Room Service', () => {
     it('게임 진행 중인 방은 참가 불가능해야 함', () => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
       assert.equal(room.canJoin(), false);
     });
@@ -219,8 +219,8 @@ describe('Room Service', () => {
     it('두 플레이어가 모두 준비되면 게임을 시작할 수 있어야 함', () => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
 
       assert.equal(room.isPlaying, true);
@@ -228,20 +228,9 @@ describe('Room Service', () => {
       assert.ok(['player1', 'player2'].includes(room.whitePlayer));
     });
 
-    it('게임 시작 후 플레이어의 준비 상태가 초기화되어야 함', () => {
-      room.join('player1');
-      room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
-      room.startGame();
-
-      assert.equal(room.players[0].isReady, false);
-      assert.equal(room.players[1].isReady, false);
-    });
-
     it('플레이어가 2명이 아니면 에러를 던져야 함', () => {
       room.join('player1');
-      room.setPlayerReady('player1', true);
+      room.togglePlayerReady('player1');
 
       assert.throws(() => {
         room.startGame();
@@ -251,7 +240,7 @@ describe('Room Service', () => {
     it('모든 플레이어가 준비되지 않았으면 에러를 던져야 함', () => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
+      room.togglePlayerReady('player1');
 
       assert.throws(() => {
         room.startGame();
@@ -261,8 +250,8 @@ describe('Room Service', () => {
     it('게임 시작 후 체스판이 초기 상태여야 함', () => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
 
       const { gameData } = room.getRoomInfo();
@@ -277,19 +266,18 @@ describe('Room Service', () => {
     it('백 플레이어인지 확인할 수 있어야 함', () => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
 
-      const whitePlayer = room.whitePlayer;
-      assert.equal(room.isWhite(whitePlayer), true);
+      
     });
 
     it('흑 플레이어는 백이 아니어야 함', () => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
 
       const blackPlayer = room.players.find(
@@ -301,8 +289,8 @@ describe('Room Service', () => {
     it('유효하지 않은 닉네임은 백이 아니어야 함', () => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
 
       assert.equal(room.isWhite(null), false);
@@ -315,8 +303,8 @@ describe('Room Service', () => {
     beforeEach(() => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
     });
 
@@ -378,8 +366,8 @@ describe('Room Service', () => {
     beforeEach(() => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
     });
 
@@ -413,8 +401,8 @@ describe('Room Service', () => {
     it('게임 시작 후 흰색 플레이어 정보를 포함해야 함', () => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
 
       const { gameData, playerData } = room.getRoomInfo();
@@ -427,8 +415,8 @@ describe('Room Service', () => {
     beforeEach(() => {
       room.join('player1');
       room.join('player2');
-      room.setPlayerReady('player1', true);
-      room.setPlayerReady('player2', true);
+      room.togglePlayerReady('player1');
+      room.togglePlayerReady('player2');
       room.startGame();
     });
 

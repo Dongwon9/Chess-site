@@ -135,7 +135,7 @@ export function deleteRoom(id) {
     if (room.players.length !== 0) {
       logger.warn(
         { roomId: id, playerCount: room.players.length },
-        '플레이어가 있는 방을 삭제합니다',
+        '플레이어가 아직 있는 방을 삭제합니다',
       );
     }
     logger.info({ roomId: id }, '방 삭제');
@@ -153,9 +153,5 @@ export function deleteRoom(id) {
  * @returns {Array<{id: string, playerCount: number, isPlaying: boolean}>}
  */
 export function getAllRooms() {
-  return Array.from(rooms.entries()).map(([id, room]) => ({
-    id,
-    playerCount: room.players.length,
-    isPlaying: room.isPlaying,
-  }));
+  return Array.from(rooms.keys());
 }

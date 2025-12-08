@@ -1,5 +1,6 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { getAllRooms } from '../../src/services/lobby.service.js';
 
 describe('Lobby Service', () => {
   let createRoom, getRoomById, getJoinableRooms, deleteRoom;
@@ -51,7 +52,7 @@ describe('Lobby Service', () => {
       const room2 = createRoom('room-2');
 
       assert.notEqual(room1.id, room2.id);
-      assert.equal(rooms.length, 2);
+      assert.equal(getAllRooms().length, 2);
     });
   });
 
