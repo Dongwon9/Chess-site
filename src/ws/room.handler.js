@@ -60,6 +60,10 @@ export function setupRoomHandlers(socket, wss) {
 
   socket.on('disconnect', () => {
     room.leave(nickname);
+    let gameResult;
+    if (room.isPlaying) {
+      gameResult = room.finishGame();
+    }
     logger.info(
       {
         socketId: socket.id,
@@ -69,6 +73,7 @@ export function setupRoomHandlers(socket, wss) {
       },
       '플레이어 연결 해제',
     );
+    wss.in(roomId).emit('updateRoom', { ...room.getRoomInfo(), gameResult });
   });
 
   socket.on('error', (error) => {
@@ -87,7 +92,14 @@ export function setupRoomHandlers(socket, wss) {
     const room = getRoomById(roomId);
     const valid = room.makeMove({ source, target });
     if (valid) {
-      wss.in(roomId).emit('updateRoom', room.getRoomInfo());
+      let payload = {};
+      if (room.board.isGameOver()) {
+        const gameResult = room.finishGame();
+        payload = { ...room.getRoomInfo(), gameResult };
+      } else {
+        payload = room.getRoomInfo();
+      }
+      wss.in(roomId).emit('updateRoom', payload);
       logger.debug({ roomId, source, target }, '유효한 이동 처리 완료');
       callback(true);
     } else {

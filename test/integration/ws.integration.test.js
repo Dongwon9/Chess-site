@@ -1,5 +1,4 @@
-import { describe, it, before, after } from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, it, beforeAll, afterAll, expect } from '@jest/globals';
 import { io } from 'socket.io-client';
 
 let serverProcess;
@@ -18,8 +17,8 @@ async function waitForServer(timeoutMs = 3000) {
 }
 
 describe('웹소켓 통합 테스트', () => {
-  before(async () => {
-    const { spawn } = await import('node:child_process');
+  beforeAll(async () => {
+    const { spawn } = await import('child_process');
     serverProcess = spawn('node', ['./src/app.js'], {
       cwd: process.cwd(),
       env: {
@@ -33,7 +32,7 @@ describe('웹소켓 통합 테스트', () => {
     await waitForServer(5000);
   });
 
-  after(() => {
+  afterAll(() => {
     if (serverProcess) serverProcess.kill('SIGTERM');
   });
 
@@ -54,7 +53,7 @@ describe('웹소켓 통합 테스트', () => {
       });
     });
 
-    assert.equal(received, true);
+    expect(received).toBe(true);
     socket.close();
   });
 
@@ -81,11 +80,10 @@ describe('웹소켓 통합 테스트', () => {
       });
     });
 
-    assert.equal(callbackResult.success, true);
-    assert.equal(callbackResult.isReady, true);
-    assert.equal(typeof callbackResult.roomInfo, 'object');
-    assert.equal(
-      Array.isArray(callbackResult.roomInfo.playerData.players),
+    expect(callbackResult.success).toBe(true);
+    expect(callbackResult.isReady).toBe(true);
+    expect(typeof callbackResult.roomInfo).toBe('object');
+    expect(Array.isArray(callbackResult.roomInfo.playerData.players)).toBe(
       true,
     );
     socket.close();
@@ -122,8 +120,8 @@ describe('웹소켓 통합 테스트', () => {
       });
     });
 
-    assert.equal(results[0], true);
-    assert.equal(results[1], false);
+    expect(results[0]).toBe(true);
+    expect(results[1]).toBe(false);
     socket.close();
   });
 
@@ -173,11 +171,11 @@ describe('웹소켓 통합 테스트', () => {
       }
     });
 
-    assert.equal(typeof updateReceived, 'object');
+    expect(typeof updateReceived).toBe('object');
     const player1 = updateReceived.playerData.players.find(
       (p) => p.nickname === 'p1',
     );
-    assert.equal(player1.isReady, true);
+    expect(player1.isReady).toBe(true);
 
     socket1.close();
     socket2.close();
@@ -202,7 +200,7 @@ describe('웹소켓 통합 테스트', () => {
       });
     });
 
-    assert.equal(typeof errorResponse.error, 'string');
+    expect(typeof errorResponse.error).toBe('string');
     socket.close();
   });
 });

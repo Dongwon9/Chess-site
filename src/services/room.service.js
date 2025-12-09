@@ -1,9 +1,13 @@
-import { getIO } from '../ws/server.js';
 import { Chess } from 'chess.js';
 import logger from '../utils/logger.js';
 import { v4 } from 'uuid';
 import { deleteRoom } from './lobby.service.js';
-//TODO 게임 종료 로직
+export const gameEndReason = {
+  WHITE_RESIGN: 'whiteResign',
+  BLACK_RESIGN: 'blackResign',
+  DRAW_AGREEMENT: 'drawAgreement',
+};
+Object.freeze(gameEndReason);
 export class Room {
   constructor(id = null) {
     this.id = id ?? v4();
@@ -29,20 +33,40 @@ export class Room {
     return player.isReady;
   }
 
-  startGame() {
+  startGame(whitePlayer = null) {
     this.board.reset();
     this.isPlaying = true;
-    if (Math.random() < 0.5) {
-      this.players[0].color = 'w';
-      this.players[1].color = 'b';
+    const white = this.players.find((p) => p.nickname === whitePlayer);
+    if (white) {
+      white.color = 'w';
     } else {
-      this.players[0].color = 'b';
-      this.players[1].color = 'w';
+      if (whitePlayer !== null) {
+        logger.warn(
+          { roomId: this.id, whitePlayer },
+          '지정된 플레이어를 찾을 수 없음',
+        );
+      }
+      if (Math.random() < 0.5) {
+        this.players[0].color = 'w';
+      } else {
+        this.players[1].color = 'w';
+      }
     }
+    this.players.find((p) => p.color !== 'w').color = 'b';
+    this.board.setHeader(
+      'White',
+      this.players.find((p) => p.color === 'w').nickname,
+    );
+    this.board.setHeader(
+      'Black',
+      this.players.find((p) => p.color === 'b').nickname,
+    );
     logger.info(
       {
         roomId: this.id,
-        players: this.players.map((p) => p.nickname),
+        players: this.players.map((p) => {
+          return { nickname: p.nickname, color: p.color };
+        }),
       },
       '게임 시작',
     );
@@ -65,12 +89,12 @@ export class Room {
       return;
     }
 
-    if (this.players.length >= 2) {
-      throw new Error('방이 가득 찼습니다');
-    }
-
     if (this.isPlaying) {
       throw new Error('게임이 진행 중입니다');
+    }
+
+    if (this.players.length >= 2) {
+      throw new Error('방이 가득 찼습니다');
     }
 
     this.players.push({ nickname, isReady: true, color: null });
@@ -104,18 +128,87 @@ export class Room {
       },
     };
   }
-  ///누구의 차례인지 닉네임을 반환
+  //누구의 차례인지 닉네임을 반환
   getTurnPlayer() {
     if (!this.isPlaying) return null;
     const turn = this.board.turn();
     return this.players.find((p) => p.color === turn)?.nickname || null;
   }
+
   makeMove({ source, target }) {
     try {
       this.board.move({ from: source, to: target });
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
+  }
+
+  getWhiteAndBlackPlayers() {
+    const white = this.players.find((p) => p.color === 'w') || null;
+    const black = this.players.find((p) => p.color === 'b') || null;
+    return { white, black };
+  }
+
+  finishGame(finishReason = null) {
+    if (!this.isPlaying) {
+      throw Error('게임이 진행중이 아닙니다');
+    }
+    const { white, black } = this.getWhiteAndBlackPlayers();
+    const whiteName = white ? white.nickname : 'Unknown';
+    const blackName = black ? black.nickname : 'Unknown';
+    let winner = undefined;
+    let reason = undefined;
+
+    // 퇴장으로 인한 게임 종료 체크
+    if (this.players.length === 1) {
+      winner = this.players[0].nickname;
+      reason = '상대의 퇴장';
+    } else if (finishReason === null && !this.board.isGameOver()) {
+      throw new Error('게임이 아직 종료되지 않았습니다');
+    } else if (finishReason !== null) {
+      switch (finishReason) {
+        case gameEndReason.WHITE_RESIGN:
+          winner = blackName;
+          reason = '기권';
+          break;
+        case gameEndReason.BLACK_RESIGN:
+          winner = whiteName;
+          reason = '기권';
+          break;
+        case gameEndReason.DRAW_AGREEMENT:
+          winner = null;
+          reason = '합의';
+          break;
+        default:
+          logger.error('알 수 없는 종료 이유:', finishReason);
+      }
+    } else if (this.board.isCheckmate()) {
+      // 체크메이트는 현재 턴 플레이어가 진 것임
+      winner = this.board.turn() === 'w' ? blackName : whiteName;
+      reason = '체크메이트';
+    } else if (this.board.isStalemate()) {
+      winner = null;
+      reason = '스테일메이트';
+    } else if (this.board.isInsufficientMaterial()) {
+      winner = null;
+      reason = '기물 부족';
+    } else if (this.board.isThreefoldRepetition()) {
+      winner = null;
+      reason = '삼회 반복';
+    } else if (this.board.isDrawByFiftyMoves()) {
+      winner = null;
+      reason = '50수 규칙';
+    }
+    if (winner === undefined || reason === undefined) {
+      throw new Error('게임 종료 사유를 결정할 수 없습니다');
+    }
+    this.isPlaying = false;
+    this.players.forEach((p) => {
+      p.isReady = false;
+      p.color = null;
+    });
+    logger.info({ roomId: this.id }, '게임 종료');
+    return { winner, reason };
   }
 }

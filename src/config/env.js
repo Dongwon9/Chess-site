@@ -27,7 +27,15 @@ function validateConfig() {
     errors.push(`NODE_ENV must be one of: ${validNodeEnvs.join(', ')}`);
   }
 
-  const validLogLevels = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
+  const validLogLevels = [
+    'trace',
+    'debug',
+    'info',
+    'warn',
+    'error',
+    'fatal',
+    'silent',
+  ];
   if (
     process.env.LOG_LEVEL &&
     !validLogLevels.includes(process.env.LOG_LEVEL)

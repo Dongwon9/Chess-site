@@ -1,5 +1,4 @@
-import { describe, it, before, after } from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, it, beforeAll, afterAll, expect } from '@jest/globals';
 
 let serverProcess;
 const baseUrl = 'http://localhost:3000';
@@ -17,9 +16,9 @@ async function waitForServer(timeoutMs = 5000) {
 }
 
 describe('HTTP 통합 테스트', () => {
-  before(async () => {
+  beforeAll(async () => {
     // Start app as a child process
-    const { spawn } = await import('node:child_process');
+    const { spawn } = await import('child_process');
     serverProcess = spawn('node', ['./src/app.js'], {
       cwd: process.cwd(),
       env: {
@@ -33,7 +32,7 @@ describe('HTTP 통합 테스트', () => {
     await waitForServer(5000);
   });
 
-  after(() => {
+  afterAll(() => {
     if (serverProcess) serverProcess.kill('SIGTERM');
   });
 
@@ -43,24 +42,24 @@ describe('HTTP 통합 테스트', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     });
-    assert.equal(res.ok, true);
+    expect(res.ok).toBe(true);
     const data = await res.json();
-    assert.equal(data.success, true);
-    assert.ok(typeof data.roomId === 'string');
+    expect(data.success).toBe(true);
+    expect(typeof data.roomId).toBe('string');
   });
 
   it('GET /lobby/rooms 는 참여 가능한 방 목록을 반환해야 한다', async () => {
     const res = await fetch(baseUrl + '/lobby/rooms');
-    assert.equal(res.ok, true);
+    expect(res.ok).toBe(true);
     const data = await res.json();
-    assert.equal(data.success, true);
-    assert.ok(Array.isArray(data.rooms));
+    expect(data.success).toBe(true);
+    expect(Array.isArray(data.rooms)).toBe(true);
   });
 
   it('GET /health 는 서버 상태를 반환해야 한다', async () => {
     const res = await fetch(baseUrl + '/health');
-    assert.equal(res.ok, true);
+    expect(res.ok).toBe(true);
     const data = await res.json();
-    assert.equal(data.status, 'ok');
+    expect(data.status).toBe('ok');
   });
 });

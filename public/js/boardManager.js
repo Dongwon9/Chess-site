@@ -15,9 +15,6 @@ export function updateBoard() {
   if (gameData.isPlaying) {
     board.position(gameData.boardFen);
     board.orientation(me.color === 'w' ? 'white' : 'black');
-  } else {
-    board.position(EMPTY_BOARD_FEN);
-    board.orientation('white');
   }
 }
 

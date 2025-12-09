@@ -47,9 +47,10 @@ function updateStatusIndicator(element, isReady) {
 }
 
 socket.on('updateRoom', (data) => {
-  const { gameData, playerData } = data;
+  const { gameData, playerData, gameResult } = data;
   const opponent = playerData.players.find((p) => p.nickname !== nickname);
   const me = playerData.players.find((p) => p.nickname === nickname);
+  console.log(data);
   roomData = { gameData, me };
 
   // Update opponent info
@@ -73,6 +74,10 @@ socket.on('updateRoom', (data) => {
   } else {
     readyButton.innerText = me.isReady ? '준비 취소' : '준비하기';
     readyButton.disabled = false;
+  }
+
+  if (gameResult) {
+    console.log(gameResult);
   }
 });
 

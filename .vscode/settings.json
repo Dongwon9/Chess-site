@@ -7,5 +7,5 @@
         "**/Thumbs.db": true
     },
     "explorerExclude.backup": {},
-    "explorer.excludeGitIgnore": true
+    "explorer.excludeGitIgnore": false
 }
