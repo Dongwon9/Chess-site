@@ -1,8 +1,4 @@
-import {
-  getRoomById,
-  joinRoomById,
-  deleteRoom,
-} from '../services/lobby.service.js';
+import { getRoomById, joinRoomById } from '../services/lobby.service.js';
 import logger from '../utils/logger.js';
 
 /**
@@ -55,7 +51,7 @@ export function setupRoomHandlers(socket, wss) {
 
     const isReady = room.togglePlayerReady(nickname);
     wss.in(roomId).emit('updateRoom', room.getRoomInfo());
-    logger.info({ roomId, nickname, isReady }, '플레이어 준비 상태 변경 완료');
+    logger.trace({ roomId, nickname, isReady }, '플레이어 준비 상태 변경 완료');
   });
 
   socket.on('disconnect', () => {
@@ -84,7 +80,7 @@ export function setupRoomHandlers(socket, wss) {
   });
 
   socket.on('makeMove', (data, callback) => {
-    logger.info(
+    logger.trace(
       { socketId: socket.id, data, callback },
       'makeMove 이벤트 수신',
     );

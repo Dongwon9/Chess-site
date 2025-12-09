@@ -39,7 +39,6 @@ router.post('/create-room', (req, res, next) => {
     // Notification is already called in createRoom
     notifyLobbyUpdate();
 
-    logger.info({ roomId: room.id, roomName }, '새 방 생성됨');
 
     res.status(201).json({
       success: true,

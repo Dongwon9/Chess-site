@@ -1,9 +1,5 @@
 import { Server } from 'socket.io';
-import {
-  createRoom,
-  getJoinableRooms,
-  getRoomById,
-} from '../services/lobby.service.js';
+import { getJoinableRooms } from '../services/lobby.service.js';
 import logger from '../utils/logger.js';
 import { setupRoomHandlers } from './room.handler.js';
 
@@ -44,18 +40,12 @@ function initSocket(server) {
 }
 
 function setupLobbyHandlers(socket) {
-  const { nickname } = socket.handshake.query;
-
   // Send joinable rooms to the connecting client
   socket.emit('updateLobby', getJoinableRooms());
   logger.debug(
     { socketId: socket.id, rooms: getJoinableRooms() },
     '로비 참가자에게 참가 가능한 방 목록 전송',
   );
-
-  socket.on('disconnect', () => {
-    logger.info({ socketId: socket.id, nickname }, '로비 클라이언트 연결 해제');
-  });
 }
 function getIO() {
   if (!wss) {

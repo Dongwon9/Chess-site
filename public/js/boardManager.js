@@ -18,7 +18,7 @@ export function updateBoard() {
   }
 }
 
-function onDragStart(source, piece, position, orientation) {
+function onDragStart(source, piece) {
   const { gameData, me } = getRoomData();
   if (!gameData.isPlaying) {
     console.error('게임이 시작되지 않음');
@@ -34,7 +34,7 @@ function onDragStart(source, piece, position, orientation) {
   }
 }
 
-async function onDrop(source, target, piece, newPos, oldPos, orientation) {
+async function onDrop(source, target, piece, newPos, oldPos) {
   const success = await socket.emitWithAck('makeMove', {
     roomId,
     source,
