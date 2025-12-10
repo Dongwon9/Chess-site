@@ -5,7 +5,6 @@ import { io } from 'https://esm.sh/socket.io-client';
 const DOM_SELECTORS = {
   opponentName: '#opponentName',
   opponentReady: '#opponentReady',
-  meReady: '#meReady',
   readyButton: '#readyButton',
   myName: '#myName',
 };
@@ -51,7 +50,6 @@ function cacheDOMElements() {
     opponentReady: document.getElementById(
       DOM_SELECTORS.opponentReady.slice(1),
     ),
-    meReady: document.getElementById(DOM_SELECTORS.meReady.slice(1)),
     readyButton: document.getElementById(DOM_SELECTORS.readyButton.slice(1)),
   };
 
@@ -164,9 +162,6 @@ function updateRoomState(gameData, playerData) {
 function updateUIStatus() {
   const { me, opponent, gameData } = ROOM_STATE;
 
-  // 내 상태 업데이트
-  updateStatusIndicator(domElements.meReady, me?.isReady ?? false);
-
   // 상대 상태 업데이트
   if (!opponent) {
     domElements.opponentName.textContent = '상대를 기다리는 중...';
@@ -216,10 +211,7 @@ function updateReadyButton(isReady, isPlaying) {
  * 게임 결과 처리
  */
 function handleGameResult(gameResult) {
-  const { winner, reason } = gameResult;
-  const message = `게임 종료: ${winner} (${reason})`;
-  console.log(message);
-  // TODO: 모달 또는 알림으로 사용자에게 표시
+  alertResult(gameResult.winner, gameResult.reason);
 }
 
 /**
@@ -253,6 +245,17 @@ function getRoomData() {
   return ROOM_STATE;
 }
 
+function alertResult(winner, reason) {
+  let message = '';
+  if (winner === nickname) {
+    message = `${reason}으로 승리하였습니다.`;
+  } else if (winner !== null) {
+    message = `${reason}으로 패배하였습니다.`;
+  } else {
+    message = `${reason}으로 무승부입니다.`;
+  }
+  alert(message);
+}
 /**
  * 페이지 언로드 시 리소스 정리
  */

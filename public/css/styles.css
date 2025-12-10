@@ -10,7 +10,8 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   display: flex;
@@ -85,7 +86,11 @@ button:disabled {
 
 /* Primary Button */
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    var(--secondary-color) 100%
+  );
   color: white;
   box-shadow: var(--shadow-md);
 }
@@ -137,7 +142,12 @@ button:disabled {
 }
 
 /* ========== Headings ========== */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--text-primary);
   font-weight: 700;
   margin-bottom: 16px;
@@ -175,18 +185,40 @@ h4 {
 }
 
 /* ========== Spacing Utilities ========== */
-.mb-1 { margin-bottom: 8px; }
-.mb-2 { margin-bottom: 16px; }
-.mb-3 { margin-bottom: 24px; }
-.mb-4 { margin-bottom: 32px; }
+.mb-1 {
+  margin-bottom: 8px;
+}
+.mb-2 {
+  margin-bottom: 16px;
+}
+.mb-3 {
+  margin-bottom: 24px;
+}
+.mb-4 {
+  margin-bottom: 32px;
+}
 
-.mt-1 { margin-top: 8px; }
-.mt-2 { margin-top: 16px; }
-.mt-3 { margin-top: 24px; }
-.mt-4 { margin-top: 32px; }
+.mt-1 {
+  margin-top: 8px;
+}
+.mt-2 {
+  margin-top: 16px;
+}
+.mt-3 {
+  margin-top: 24px;
+}
+.mt-4 {
+  margin-top: 32px;
+}
 
-.px-2 { padding-left: 16px; padding-right: 16px; }
-.py-2 { padding-top: 16px; padding-bottom: 16px; }
+.px-2 {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.py-2 {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
 
 /* ========== Status Badge ========== */
 .badge {
@@ -361,52 +393,65 @@ hr {
 
 .room-container {
   width: 100%;
-  max-width: 900px;
+  max-width: 600px;
   margin: 0 auto;
-}
-
-.game-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
-  align-items: center;
 }
 
-@media (max-width: 1024px) {
-  .game-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Player Info Section */
-.player-info {
+/* Opponent Info Section */
+.opponent-section {
   background: white;
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px;
   box-shadow: var(--shadow-lg);
 }
 
-.player-card {
-  margin-bottom: 32px;
+/* Board Section */
+.board-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.player-card:last-child {
+#chessBoard {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-xl);
+  border: 3px solid var(--primary-color);
+}
+
+/* My Info Section */
+.my-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Player Card */
+.player-card {
   margin-bottom: 0;
+  padding: 0;
 }
 
 .player-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+  gap: 8px;
 }
 
 .player-name {
   font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
+  flex: 1;
 }
 
 .player-status {
@@ -443,35 +488,38 @@ hr {
 }
 
 @keyframes pulse-ready {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes pulse-waiting {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-/* Board Section */
-#chessBoard {
-  width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
-  border-radius: 8px;
-  box-shadow: var(--shadow-xl);
-  border: 3px solid var(--primary-color);
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Ready Button */
 #readyButton {
-  width: 100%;
-  margin-top: 24px;
-  padding: 14px 24px;
-  font-size: 16px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  padding: 10px 20px;
+  font-size: 14px;
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    var(--secondary-color) 100%
+  );
   color: white;
   box-shadow: var(--shadow-md);
   transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
 #readyButton:hover:not(:disabled) {
@@ -511,7 +559,8 @@ hr {
 }
 
 @keyframes loading {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(0.8);
   }
@@ -546,14 +595,6 @@ hr {
     gap: 16px;
   }
 
-  .game-layout {
-    gap: 20px;
-  }
-
-  .player-info {
-    padding: 16px;
-  }
-
   button {
     padding: 10px 20px;
     font-size: 13px;
@@ -577,6 +618,16 @@ hr {
   #createRoom {
     padding: 14px 28px;
     font-size: 15px;
+  }
+
+  .opponent-section,
+  .my-section {
+    padding: 16px;
+  }
+
+  #readyButton {
+    padding: 10px 16px;
+    font-size: 13px;
   }
 }
 

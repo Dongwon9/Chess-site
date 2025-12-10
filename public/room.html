@@ -6,13 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="온라인 체스 게임 방" />
   <title>체스 - 게임</title>
-  <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
-    integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous" />
+  <!-- "https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
+  integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous" -->
+  <link rel="stylesheet" href="./css/chessboard-1.0.0.min.css" />
   <link rel="stylesheet" href="./css/styles.css" />
   <style>
     /* Chessboard override styles */
     .chessboard {
-      border-radius: 8px;
+      border-radius: 4px;
       overflow: hidden;
     }
   </style>
@@ -20,48 +21,43 @@
 
 <body>
   <div class="container room-container">
-    <div class="game-layout">
-      <!-- Board Section -->
-      <div>
-        <div id="chessBoard" style="width: 100%; max-width: 500px; margin: 0 auto;"></div>
-      </div>
-
-      <!-- Player Info Section -->
-      <div class="player-info">
-        <!-- Opponent Info -->
-        <div class="player-card">
-          <div class="player-header">
-            <h3 class="player-name" id="opponentName">상대를 기다리는 중...</h3>
-          </div>
+    <!-- Opponent Info (Top) -->
+    <div class="opponent-section">
+      <div class="player-card">
+        <div class="player-header">
+          <h3 class="player-name" id="opponentName">상대를 기다리는 중...</h3>
           <div class="player-status">
             <span class="status-indicator waiting"></span>
             <span id="opponentReady" class="status-waiting">대기 중...</span>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- My Info -->
-        <div class="player-card">
-          <div class="player-header">
-            <h3 class="player-name" id="myName">내 이름</h3>
-          </div>
-          <div class="player-status">
-            <span class="status-indicator waiting"></span>
-            <span id='meReady' class="status-waiting">대기 중...</span>
-          </div>
+    <!-- Board Section (Middle) -->
+    <div class="board-section">
+      <div id="chessBoard"></div>
+    </div>
+
+    <!-- My Info Section (Bottom) -->
+    <div class="my-section">
+      <div class="player-card">
+        <div class="player-header">
+          <h3 class="player-name" id="myName">내 이름</h3>
+          <button id="readyButton" class="btn-primary">준비하기</button>
         </div>
-
-        <!-- Ready Button -->
-        <button id="readyButton" class="btn-primary btn-lg">준비하기</button>
       </div>
     </div>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js"
+  <!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"
     integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2"
     crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
+  <script src="https://unpkg.com/@chrisoakman/chessboardj`s@1.0.0/dist/chessboard-1.0.0.min.js"
     integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
-    crossorigin="anonymous"></script>
+    crossorigin="anonymous"></script> -->
+  <script src="./js/jquery-3.5.1.min.js"></script>
+  <script src="./js/chessboard-1.0.0.min.js"></script>
   <script type="module" src="./js/room.js"></script>
 </body>
 
