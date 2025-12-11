@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { getRoomData, roomId, socket } from './room.js';
 const EMPTY_BOARD_FEN = '8/8/8/8/8/8/8/8 w - - 0 1';
 const chessBoardConfig = {
