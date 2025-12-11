@@ -1,14 +1,20 @@
+/* eslint-disable no-unused-vars */
 import { Room } from './room.service.js';
 import logger from '../utils/logger.js';
+import {
+  emitEvent,
+  UPDATE_LOBBY,
+  registerListener,
+  DELETE_ROOM,
+} from '../events/lobby.event.js';
 
 const rooms = new Map();
 
-// Lazy import to avoid circular dependency
-async function getIO() {
-  const module = await import('../ws/server.js');
-  return module.getIO();
-}
-
+/**이벤트리스너 등록 */
+registerListener(DELETE_ROOM, (roomId) => {
+  deleteRoom(roomId);
+  emitEvent(UPDATE_LOBBY);
+});
 /**
  * 새로운 방 생성
  * @param {string} roomId - 방 ID (미지정 시 UUID 자동 생성)
@@ -18,23 +24,8 @@ export function createRoom(roomId = null) {
   const newRoom = new Room(roomId);
   rooms.set(newRoom.id, newRoom);
   logger.info({ roomId: newRoom.id }, '새로운 방 생성');
-  // Broadcast updated lobby - use sync version for internal reference
-  notifyLobbyUpdate();
-
+  emitEvent(UPDATE_LOBBY);
   return newRoom;
-}
-
-/**
- * Notify lobby clients of room list update
- */
-export function notifyLobbyUpdate() {
-  import('../ws/server.js').then((module) => {
-    try {
-      module.getIO().in('lobby').emit('updateLobby', getJoinableRooms());
-    } catch (error) {
-      logger.debug({ error: error.message }, 'Failed to notify lobby update');
-    }
-  });
 }
 
 /**
@@ -51,7 +42,7 @@ export function getJoinableRooms() {
         return false;
       }
     })
-    .map(([k]) => k);
+    .map(([key, _]) => key);
 }
 
 /**
@@ -67,7 +58,7 @@ export function getRoomById(roomId) {
 
   const room = rooms.get(roomId);
   if (!room) {
-    logger.debug({ roomId }, '방을 찾지 못했습니다');
+    logger.warn({ roomId }, '방을 찾지 못했습니다');
     return null;
   }
 
@@ -140,12 +131,10 @@ export function deleteRoom(id) {
     }
     logger.info({ roomId: id }, '방 삭제');
     rooms.delete(id);
+    emitEvent(UPDATE_LOBBY);
   } else {
     logger.debug({ roomId: id }, '삭제할 방을 찾지 못했습니다');
   }
-
-  // Broadcast updated lobby
-  notifyLobbyUpdate();
 }
 
 /**

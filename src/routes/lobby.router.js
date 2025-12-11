@@ -4,7 +4,6 @@ import {
   getJoinableRooms,
   getRoomById,
   getAllRooms,
-  notifyLobbyUpdate,
 } from '../services/lobby.service.js';
 import logger from '../utils/logger.js';
 
@@ -37,8 +36,6 @@ router.post('/create-room', (req, res, next) => {
 
     const room = createRoom(roomName || undefined);
     // Notification is already called in createRoom
-    notifyLobbyUpdate();
-
 
     res.status(201).json({
       success: true,

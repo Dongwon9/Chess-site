@@ -12,8 +12,8 @@ const board = Chessboard('chessBoard', chessBoardConfig);
 
 export function updateBoard() {
   const { gameData, me } = getRoomData();
+  board.position(gameData.boardFen);
   if (gameData.isPlaying) {
-    board.position(gameData.boardFen);
     board.orientation(me.color === 'w' ? 'white' : 'black');
   }
 }

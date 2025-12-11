@@ -1,13 +1,14 @@
 import { Chess } from 'chess.js';
 import logger from '../utils/logger.js';
 import { v4 } from 'uuid';
-import { deleteRoom } from './lobby.service.js';
+import { DELETE_ROOM, emitEvent, UPDATE_LOBBY } from '../events/lobby.event.js';
 export const gameEndReason = {
   WHITE_RESIGN: 'whiteResign',
   BLACK_RESIGN: 'blackResign',
   DRAW_AGREEMENT: 'drawAgreement',
 };
 Object.freeze(gameEndReason);
+
 export class Room {
   constructor(id = null) {
     this.id = id ?? v4();
@@ -102,6 +103,7 @@ export class Room {
       { roomId: this.id, nickname, playerCount: this.players.length },
       '플레이어 입장',
     );
+    emitEvent(UPDATE_LOBBY);
   }
 
   leave(nickname) {
@@ -111,7 +113,7 @@ export class Room {
     }
     this.players = this.players.filter((p) => p.nickname !== nickname);
     if (this.players.length === 0) {
-      deleteRoom(this.id);
+      emitEvent(DELETE_ROOM, this.id);
     }
     logger.info({ roomId: this.id, nickname }, '플레이어 퇴장');
   }
@@ -128,7 +130,7 @@ export class Room {
       },
     };
   }
-  //누구의 차례인지 닉네임을 반환
+  /** 누구의 차례인지 닉네임을 반환 */
   getTurnPlayer() {
     if (!this.isPlaying) return null;
     const turn = this.board.turn();
@@ -203,12 +205,14 @@ export class Room {
     if (winner === undefined || reason === undefined) {
       throw new Error('게임 종료 사유를 결정할 수 없습니다');
     }
+
     this.isPlaying = false;
     this.players.forEach((p) => {
       p.isReady = false;
       p.color = null;
     });
     logger.info({ roomId: this.id }, '게임 종료');
+    emitEvent(UPDATE_LOBBY);
     return { winner, reason };
   }
 }
