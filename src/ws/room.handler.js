@@ -35,23 +35,65 @@ export function setupRoomHandlers(socket, wss) {
     return;
   }
 
-  // 방에 참여한 직후 현재 방 상태를 해당 방 모든 클라이언트에게 전송
-  wss.in(roomId).emit('updateRoom', room.getRoomInfo());
+  // 웹소켓 경로로 입장한 사용자는 초기 준비 상태를 false로 설정
+  const player = room.players.find((p) => p.nickname === nickname);
+  if (player) {
+    player.isReady = false;
+  }
+
+  // 초기 접속 시에는 즉시 브로드캐스트하지 않음 (이벤트 기반 업데이트)
 
   /**
-   * 플레이어 준비 상태 변경
+   * 플레이어 준비 상태 변경/설정
+   * 이벤트: 'playerReady'
+   * payload: { nickname, roomId, isReady? }
+   * callback: ({ success, isReady, roomInfo } | { error })
    */
-  socket.on('togglePlayerReady', (data) => {
-    const { nickname, roomId } = data;
-    const room = getRoomById(roomId);
-    if (!room) {
-      logger.error({ roomId }, '방을 찾을 수 없습니다');
+  socket.on('playerReady', (data, callback) => {
+    const { nickname: nick, roomId: id, isReady } = data || {};
+    const targetRoom = getRoomById(id);
+    if (!targetRoom) {
+      logger.error({ roomId: id }, '방을 찾을 수 없습니다');
+      if (typeof callback === 'function') {
+        callback({ error: '방을 찾을 수 없습니다' });
+      }
       return;
     }
 
-    const isReady = room.togglePlayerReady(nickname);
-    wss.in(roomId).emit('updateRoom', room.getRoomInfo());
-    logger.trace({ roomId, nickname, isReady }, '플레이어 준비 상태 변경 완료');
+    const targetPlayer = targetRoom.players.find((p) => p.nickname === nick);
+    if (!targetPlayer) {
+      logger.error(
+        { roomId: id, nickname: nick },
+        '플레이어를 찾을 수 없습니다',
+      );
+      if (typeof callback === 'function') {
+        callback({ error: '플레이어를 찾을 수 없습니다' });
+      }
+      return;
+    }
+
+    let newReadyState;
+    if (typeof isReady === 'boolean') {
+      // 원하는 상태와 현재 상태가 다르면 토글 수행
+      if (targetPlayer.isReady !== isReady) {
+        newReadyState = targetRoom.togglePlayerReady(nick);
+      } else {
+        newReadyState = targetPlayer.isReady;
+      }
+    } else {
+      // isReady 미제공 시 토글
+      newReadyState = targetRoom.togglePlayerReady(nick);
+    }
+
+    const roomInfo = targetRoom.getRoomInfo();
+    wss.in(id).emit('updateRoom', roomInfo);
+    logger.trace(
+      { roomId: id, nickname: nick, isReady: newReadyState },
+      '플레이어 준비 상태 처리 완료',
+    );
+    if (typeof callback === 'function') {
+      callback({ success: true, isReady: newReadyState, roomInfo });
+    }
   });
 
   socket.on('disconnect', () => {
@@ -101,6 +143,31 @@ export function setupRoomHandlers(socket, wss) {
     } else {
       logger.warn({ roomId, source, target }, '유효하지 않은 이동 시도');
       callback(false);
+    }
+  });
+
+  socket.on('resign', (data) => {
+    const { roomId, nickname } = data;
+    try {
+      const room = getRoomById(roomId);
+      const gameResult = room.resignGame(nickname);
+      wss.in(roomId).emit('updateRoom', { ...room.getRoomInfo(), gameResult });
+    } catch (error) {
+      logger.error({ error }, '기권 처리중 오류 발생');
+    }
+  });
+
+  socket.on('callDraw', (data) => {
+    const { roomId, nickname } = data;
+    try {
+      const room = getRoomById(roomId);
+      const gameResult = room.callDraw(nickname);
+      if (!gameResult) {
+        wss.in(roomId).emit('drawCalled');
+      }
+      wss.in(roomId).emit('updateRoom', { ...room.getRoomInfo(), gameResult });
+    } catch (error) {
+      logger.error({ error });
     }
   });
 }

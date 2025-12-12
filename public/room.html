@@ -9,7 +9,12 @@
   <!-- "https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
   integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous" -->
   <link rel="stylesheet" href="./css/chessboard-1.0.0.min.css" />
-  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/base.css" />
+  <link rel="stylesheet" href="./css/buttons.css" />
+  <link rel="stylesheet" href="./css/typography.css" />
+  <link rel="stylesheet" href="./css/utilities.css" />
+  <link rel="stylesheet" href="./css/room.css" />
+  <link rel="stylesheet" href="./css/responsive.css" />
   <style>
     /* Chessboard override styles */
     .chessboard {
@@ -20,6 +25,7 @@
 </head>
 
 <body>
+  <button id="leave" class="btn-danger leave-button">&lt; 나가기</button>
   <div class="container room-container">
     <!-- Opponent Info (Top) -->
     <div class="opponent-section">
@@ -36,7 +42,28 @@
 
     <!-- Board Section (Middle) -->
     <div class="board-section">
-      <div id="chessBoard"></div>
+      <div id="chessBoard" class="chess-board"></div>
+
+      <!-- Game Dialogs -->
+      <dialog id="confirmLeave" class="confirm-leave">
+        <div class="dialog-content">
+          <h2 id="dialogTitle">경고: 게임 진행중</h2>
+          <p id="dialogMessage">정말로 나가시겠습니까?
+            진행 중인 게임은 패배 처리됩니다.
+          </p>
+          <button id="dialogConfirmButton" class="btn-primary">확인</button>
+          <button id="dialogCancelButton" class="btn-secondary">취소</button>
+        </div>
+      </dialog>
+      <dialog id="confirmResign" class="confirm-resign">
+        <div class="dialog-content">
+          <h2 id="resignDialogTitle">기권 확인</h2>
+          <p id="resignDialogMessage">정말로 기권하시겠습니까?
+          </p>
+          <button id="resignDialogConfirmButton" class="btn-danger">기권</button>
+          <button id="resignDialogCancelButton" class="btn-secondary">취소</button>
+        </div>
+      </dialog>
     </div>
 
     <!-- My Info Section (Bottom) -->
@@ -44,7 +71,8 @@
       <div class="player-card">
         <div class="player-header">
           <h3 class="player-name" id="myName">내 이름</h3>
-          <button id="readyButton" class="btn-primary">준비하기</button>
+          <button id="callDraw" class="btn-secondary hidden">무승부</button>
+          <button id="readyButton" class="btn-primary ready-button">준비하기</button>
         </div>
       </div>
     </div>
@@ -56,6 +84,7 @@
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
     integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
     crossorigin="anonymous"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="./js/room.js"></script>
 </body>
 

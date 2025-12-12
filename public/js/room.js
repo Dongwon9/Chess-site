@@ -1,12 +1,20 @@
 import { updateBoard } from './boardManager.js';
 import { getNickname } from './getNickname.js';
-import { io } from 'https://esm.sh/socket.io-client';
+// socket.io-client는 서버에서 제공되는 글로벌 `io`를 사용합니다.
 
 const DOM_SELECTORS = {
   opponentName: '#opponentName',
   opponentReady: '#opponentReady',
   readyButton: '#readyButton',
   myName: '#myName',
+  leave: '#leave',
+  confirmLeave: '#confirmLeave',
+  dialogConfirmButton: '#dialogConfirmButton',
+  dialogCancelButton: '#dialogCancelButton',
+  confirmResign: '#confirmResign',
+  resignDialogConfirmButton: '#resignDialogConfirmButton',
+  resignDialogCancelButton: '#resignDialogCancelButton',
+  callDraw: '#callDraw',
 };
 
 const ROOM_STATE = {
@@ -51,6 +59,24 @@ function cacheDOMElements() {
       DOM_SELECTORS.opponentReady.slice(1),
     ),
     readyButton: document.getElementById(DOM_SELECTORS.readyButton.slice(1)),
+    leave: document.getElementById(DOM_SELECTORS.leave.slice(1)),
+    confirmLeave: document.getElementById(DOM_SELECTORS.confirmLeave.slice(1)),
+    dialogConfirmButton: document.getElementById(
+      DOM_SELECTORS.dialogConfirmButton.slice(1),
+    ),
+    dialogCancelButton: document.getElementById(
+      DOM_SELECTORS.dialogCancelButton.slice(1),
+    ),
+    confirmResign: document.getElementById(
+      DOM_SELECTORS.confirmResign.slice(1),
+    ),
+    resignDialogConfirmButton: document.getElementById(
+      DOM_SELECTORS.resignDialogConfirmButton.slice(1),
+    ),
+    resignDialogCancelButton: document.getElementById(
+      DOM_SELECTORS.resignDialogCancelButton.slice(1),
+    ),
+    callDraw: document.getElementById(DOM_SELECTORS.callDraw.slice(1)),
   };
 
   if (Object.values(domElements).some((el) => !el)) {
@@ -79,6 +105,9 @@ function initializeSocket() {
     socket.on('updateRoom', handleRoomUpdate);
     socket.on('disconnect', handleDisconnect);
     socket.on('error', handleSocketError);
+    socket.on('drawCalled', () => {
+      console.log('무승부 제안됨');
+    });
   } catch (error) {
     handleFatalError(new Error(`소켓 초기화 실패: ${error.message}`));
   }
@@ -89,6 +118,38 @@ function initializeSocket() {
  */
 function setupEventListeners() {
   domElements.readyButton.addEventListener('click', handleReadyButtonClick);
+
+  domElements.leave.addEventListener('click', () => {
+    if (!ROOM_STATE.gameData?.isPlaying) {
+      window.location.href = '/lobby.html';
+    } else {
+      domElements.confirmLeave.showModal();
+    }
+  });
+
+  // 확인 버튼: /lobby로 이동
+  domElements.dialogConfirmButton.addEventListener('click', () => {
+    domElements.confirmLeave.close();
+    window.location.href = '/lobby.html';
+  });
+
+  // 취소 버튼: 다이얼로그 닫기
+  domElements.dialogCancelButton.addEventListener('click', () => {
+    domElements.confirmLeave.close();
+  });
+
+  domElements.resignDialogConfirmButton.addEventListener('click', () => {
+    socket.emit('resign', { roomId, nickname });
+    domElements.confirmResign.close();
+  });
+
+  domElements.resignDialogCancelButton.addEventListener('click', () => {
+    domElements.confirmResign.close();
+  });
+
+  domElements.callDraw.addEventListener('click', () => {
+    socket.emit('callDraw', { roomId, nickname });
+  });
 }
 
 /**
@@ -101,6 +162,17 @@ function cleanupEventListeners() {
       handleReadyButtonClick,
     );
   }
+  if (domElements.dialogConfirmButton) {
+    domElements.dialogConfirmButton.removeEventListener('click', () => {
+      domElements.confirmLeave.close();
+      window.location.href = '/lobby.html';
+    });
+  }
+  if (domElements.dialogCancelButton) {
+    domElements.dialogCancelButton.removeEventListener('click', () => {
+      domElements.confirmLeave.close();
+    });
+  }
 }
 
 /**
@@ -108,10 +180,14 @@ function cleanupEventListeners() {
  */
 function handleReadyButtonClick() {
   if (!socket) return;
-  try {
-    socket.emit('togglePlayerReady', { nickname, roomId });
-  } catch (error) {
-    console.error('준비 상태 전송 실패:', error);
+  if (!ROOM_STATE.gameData?.isPlaying) {
+    try {
+      socket.emit('playerReady', { nickname, roomId });
+    } catch (error) {
+      console.error('준비 상태 전송 실패:', error);
+    }
+  } else {
+    domElements.confirmResign.showModal();
   }
 }
 
@@ -120,7 +196,7 @@ function handleReadyButtonClick() {
  */
 function autoReadyOnJoin() {
   if (socket) {
-    socket.emit('togglePlayerReady', { nickname, roomId });
+    socket.emit('playerReady', { nickname, roomId });
   }
 }
 
@@ -165,7 +241,7 @@ function updateUIStatus() {
   // 상대 상태 업데이트
   if (!opponent) {
     domElements.opponentName.textContent = '상대를 기다리는 중...';
-    domElements.opponentReady.textContent = '대기 중...';
+    domElements.opponentReady.textContent = '';
     domElements.opponentReady.className = 'status-waiting';
   } else {
     domElements.opponentName.textContent = opponent.nickname;
@@ -199,14 +275,15 @@ function updateStatusIndicator(element, isReady) {
  */
 function updateReadyButton(isReady, isPlaying) {
   if (isPlaying) {
-    domElements.readyButton.textContent = '게임 진행 중...';
-    domElements.readyButton.disabled = true;
+    domElements.readyButton.textContent = '기권';
+    domElements.readyButton.className = 'btn-danger';
+    domElements.callDraw.classList.remove('hidden');
   } else {
     domElements.readyButton.textContent = isReady ? '준비 취소' : '준비하기';
-    domElements.readyButton.disabled = false;
+    domElements.readyButton.className = 'btn-primary';
+    domElements.callDraw.classList.add('hidden');
   }
 }
-
 /**
  * 게임 결과 처리
  */
@@ -248,9 +325,9 @@ function getRoomData() {
 function alertResult(winner, reason) {
   let message = '';
   if (winner === nickname) {
-    message = `${reason}으로 승리하였습니다.`;
+    message = `${reason}으로 승리했습니다.`;
   } else if (winner !== null) {
-    message = `${reason}으로 패배하였습니다.`;
+    message = `${reason}으로 패배했습니다.`;
   } else {
     message = `${reason}으로 무승부입니다.`;
   }

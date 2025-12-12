@@ -16,7 +16,8 @@ const router = express.Router();
  */
 router.post('/create-room', (req, res, next) => {
   try {
-    const { roomName } = req.body;
+    const roomName =
+      req.body && typeof req.body === 'object' ? req.body.roomName : undefined;
 
     // Validate room name if provided
     if (roomName && (typeof roomName !== 'string' || !roomName.trim())) {

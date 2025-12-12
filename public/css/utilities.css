@@ -1,0 +1,107 @@
+/* ========== Spacing Utilities ========== */
+.mb-1 {
+    margin-bottom: var(--spacing-xs);
+}
+
+.mb-2 {
+    margin-bottom: var(--spacing-md);
+}
+
+.mb-3 {
+    margin-bottom: var(--spacing-xl);
+}
+
+.mb-4 {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.mt-1 {
+    margin-top: var(--spacing-xs);
+}
+
+.mt-2 {
+    margin-top: var(--spacing-md);
+}
+
+.mt-3 {
+    margin-top: var(--spacing-xl);
+}
+
+.mt-4 {
+    margin-top: var(--spacing-2xl);
+}
+
+.px-2 {
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+}
+
+.py-2 {
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+}
+
+/* ========== Status Badge ========== */
+.badge {
+    display: inline-block;
+    padding: 6px var(--spacing-sm);
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-success {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.badge-warning {
+    background: #fed7d7;
+    color: #742a2a;
+}
+
+.badge-info {
+    background: #bee3f8;
+    color: #2c5282;
+}
+
+/* ========== Divider ========== */
+hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: var(--spacing-xl) 0;
+}
+
+/* ========== Loading State ========== */
+.loading {
+    display: inline-block;
+    width: var(--spacing-xs);
+    height: var(--spacing-xs);
+    background: currentColor;
+    border-radius: 50%;
+    animation: loading var(--transition-slow) infinite;
+}
+
+.loading:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loading:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes loading {
+
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

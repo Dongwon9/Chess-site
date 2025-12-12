@@ -9,6 +9,10 @@ html {
   scroll-behavior: smooth;
 }
 
+.hidden {
+  display: none !important;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
@@ -86,11 +90,9 @@ button:disabled {
 
 /* Primary Button */
 .btn-primary {
-  background: linear-gradient(
-    135deg,
-    var(--primary-color) 0%,
-    var(--secondary-color) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--primary-color) 0%,
+      var(--secondary-color) 100%);
   color: white;
   box-shadow: var(--shadow-md);
 }
@@ -125,7 +127,7 @@ button:disabled {
 
 /* Danger Button */
 .btn-danger {
-  background: var(--danger-color);
+  background: var(--danger-color) !important;
   color: white;
   box-shadow: var(--shadow-md);
 }
@@ -188,12 +190,15 @@ h4 {
 .mb-1 {
   margin-bottom: 8px;
 }
+
 .mb-2 {
   margin-bottom: 16px;
 }
+
 .mb-3 {
   margin-bottom: 24px;
 }
+
 .mb-4 {
   margin-bottom: 32px;
 }
@@ -201,12 +206,15 @@ h4 {
 .mt-1 {
   margin-top: 8px;
 }
+
 .mt-2 {
   margin-top: 16px;
 }
+
 .mt-3 {
   margin-top: 24px;
 }
+
 .mt-4 {
   margin-top: 32px;
 }
@@ -215,6 +223,7 @@ h4 {
   padding-left: 16px;
   padding-right: 16px;
 }
+
 .py-2 {
   padding-top: 16px;
   padding-bottom: 16px;
@@ -488,20 +497,24 @@ hr {
 }
 
 @keyframes pulse-ready {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
 }
 
 @keyframes pulse-waiting {
+
   0%,
   100% {
     opacity: 0.6;
   }
+
   50% {
     opacity: 1;
   }
@@ -511,11 +524,9 @@ hr {
 #readyButton {
   padding: 10px 20px;
   font-size: 14px;
-  background: linear-gradient(
-    135deg,
-    var(--primary-color) 0%,
-    var(--secondary-color) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--primary-color) 0%,
+      var(--secondary-color) 100%);
   color: white;
   box-shadow: var(--shadow-md);
   transition: all 0.3s ease;
@@ -559,11 +570,13 @@ hr {
 }
 
 @keyframes loading {
+
   0%,
   100% {
     opacity: 0.3;
     transform: scale(0.8);
   }
+
   50% {
     opacity: 1;
     transform: scale(1);
@@ -701,6 +714,56 @@ button:focus,
 input:focus {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
+}
+
+/* ========== Leave Button (Room Page) ========== */
+#leave {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+}
+
+/* ========== Game Dialog ========== */
+dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  box-shadow: var(--shadow-xl);
+  z-index: 2000;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.dialog-content {
+  padding: 32px;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 400px;
+}
+
+.dialog-content h2 {
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  font-size: 20px;
+}
+
+.dialog-content p {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dialog-content button {
+  min-width: 120px;
 }
 
 /* ========== Print Styles ========== */

@@ -15,6 +15,25 @@ export class Room {
     this.board = new Chess();
     this.players = [];
     this.isPlaying = false;
+    this.drawCalledPlayers = new Set();
+  }
+  callDraw(nickname) {
+    if (!this.isPlaying) {
+      throw new Error('게임이 진행 중이지 않습니다');
+    }
+    const player = this.players.find((p) => p.nickname === nickname);
+    if (!player) {
+      throw new Error('플레이어를 찾을 수 없습니다');
+    }
+    this.drawCalledPlayers.add(nickname);
+
+    const allAgreed = this.players.every((p) =>
+      this.drawCalledPlayers.has(p.nickname),
+    );
+    if (allAgreed) {
+      this.drawCalledPlayers.clear();
+      return this.finishGame(gameEndReason.DRAW_AGREEMENT);
+    }
   }
 
   togglePlayerReady(nickname) {
@@ -151,7 +170,17 @@ export class Room {
     const black = this.players.find((p) => p.color === 'b') || null;
     return { white, black };
   }
-
+  resignGame(resigningPlayer) {
+    const player = this.players.find((p) => p.nickname === resigningPlayer);
+    if (!player) {
+      throw Error('플레이어를 찾지 못했습니다.');
+    }
+    const finishReason =
+      player.color === 'w'
+        ? gameEndReason.WHITE_RESIGN
+        : gameEndReason.BLACK_RESIGN;
+    return this.finishGame(finishReason);
+  }
   finishGame(finishReason = null) {
     if (!this.isPlaying) {
       throw Error('게임이 진행중이 아닙니다');

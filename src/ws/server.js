@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import { getJoinableRooms } from '../services/lobby.service.js';
 import logger from '../utils/logger.js';
 import { setupRoomHandlers } from './room.handler.js';
+import { setupLobbyHandlers } from './lobby.handler.js';
 import { registerListener, UPDATE_LOBBY } from '../events/lobby.event.js';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
 const CORS_METHODS = ['GET', 'POST'];
@@ -44,14 +45,7 @@ function initSocket(server) {
   return wss;
 }
 
-function setupLobbyHandlers(socket) {
-  // Send joinable rooms to the connecting client
-  socket.emit('updateLobby', getJoinableRooms());
-  logger.debug(
-    { socketId: socket.id, rooms: getJoinableRooms() },
-    '로비 참가자에게 참가 가능한 방 목록 전송',
-  );
-}
+// 로비 핸들러는 별도 모듈로 분리됨
 function getIO() {
   if (!wss) {
     throw new Error(

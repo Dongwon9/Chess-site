@@ -6,7 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="온라인 체스 게임 로비" />
   <title>체스 - 로비</title>
-  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/base.css" />
+  <link rel="stylesheet" href="./css/buttons.css" />
+  <link rel="stylesheet" href="./css/typography.css" />
+  <link rel="stylesheet" href="./css/utilities.css" />
+  <link rel="stylesheet" href="./css/lobby.css" />
+  <link rel="stylesheet" href="./css/responsive.css" />
 </head>
 
 <body>
@@ -17,14 +22,14 @@
         <span class="nickname-display">
           플레이어: <span id="nickname"></span>
         </span>
-        <button id="changeNickname" class="btn-secondary">닉네임 변경</button>
+        <button id="changeNickname" class="btn-secondary nickname-change-btn">닉네임 변경</button>
       </div>
     </div>
 
     <div class="card">
       <div class="rooms-section">
         <h2>사용 가능한 방</h2>
-        <ul id="roomList" class="mb-4"></ul>
+        <ul id="roomList" class="room-list mb-4"></ul>
         <div id="emptyState" class="empty-state" style="display: none;">
           <div class="empty-state-icon">📭</div>
           <div class="empty-state-text">현재 사용 가능한 방이 없습니다.</div>
@@ -35,11 +40,12 @@
 
       <div class="create-room-section">
         <h3>새로운 게임 시작</h3>
-        <button id="createRoom" class="btn-primary btn-lg">방 만들기</button>
+        <button id="createRoom" class="btn-primary btn-lg create-room-btn">방 만들기</button>
       </div>
     </div>
   </div>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="./js/lobby.js"></script>
 </body>
 

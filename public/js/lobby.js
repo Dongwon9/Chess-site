@@ -1,4 +1,4 @@
-import { io } from 'https://esm.sh/socket.io-client';
+// socket.io-client는 서버에서 제공되는 글로벌 `io`를 사용합니다.
 import { getNickname } from './getNickname.js';
 
 const CONSTANTS = {

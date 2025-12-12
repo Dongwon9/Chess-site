@@ -10,7 +10,9 @@ async function waitForServer(timeoutMs = 3000) {
     try {
       const res = await fetch(baseUrl + '/');
       if (res.ok || res.redirected) return true;
-    } catch (_) {}
+    } catch (e) {
+      void e;
+    }
     await new Promise((r) => setTimeout(r, 100));
   }
   throw new Error('Server did not start in time');

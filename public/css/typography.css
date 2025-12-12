@@ -1,0 +1,42 @@
+/* ========== Headings ========== */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-md);
+}
+
+h1 {
+    font-size: var(--font-size-4xl);
+    letter-spacing: -1px;
+}
+
+h2 {
+    font-size: var(--font-size-3xl);
+    letter-spacing: -0.5px;
+}
+
+h3 {
+    font-size: var(--font-size-2xl);
+}
+
+h4 {
+    font-size: var(--font-size-xl);
+}
+
+/* ========== Text Utilities ========== */
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}

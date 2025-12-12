@@ -6,7 +6,6 @@ const chessBoardConfig = {
   position: EMPTY_BOARD_FEN,
   onDragStart: onDragStart,
   onDrop: onDrop,
-  onSnapEnd: onSnapEnd,
 };
 
 const board = Chessboard('chessBoard', chessBoardConfig);
@@ -41,14 +40,14 @@ async function onDrop(source, target, piece, newPos, oldPos) {
     source,
     target,
   });
-  console.log('Move success:', success);
   if (!success) {
     board.position(oldPos);
-    return;
+    return 'snapback';
   }
 }
 
-function onSnapEnd() {
-  const { gameData } = getRoomData();
-  board.position(gameData.boardFen);
-}
+// function onSnapEnd() {
+//   const { gameData } = getRoomData();
+//   console.log('onSnapEnd!');
+//   board.position(gameData.boardFen);
+// }
