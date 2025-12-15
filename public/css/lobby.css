@@ -53,7 +53,7 @@
 }
 
 .rooms-section h2 {
-    color: #000;
+    color: var(--text-primary);
     margin-bottom: var(--spacing-xl);
     text-align: center;
     font-size: var(--font-size-3xl);
@@ -121,7 +121,7 @@
 }
 
 .create-room-section h3 {
-    color: #000;
+    color: var(--text-primary);
     margin-bottom: var(--spacing-xl);
     font-size: var(--font-size-xl);
 }
