@@ -4,7 +4,8 @@ import logger from '../utils/logger.js';
 import { setupRoomHandlers } from './room.handler.js';
 import { setupLobbyHandlers } from './lobby.handler.js';
 import { registerListener, UPDATE_LOBBY } from '../events/lobby.event.js';
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
+import { config } from '../config/env.js';
+const CORS_ORIGIN = config.corsOrigin;
 const CORS_METHODS = ['GET', 'POST'];
 const LOCATION_LOBBY = 'lobby';
 

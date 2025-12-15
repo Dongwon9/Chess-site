@@ -12,6 +12,10 @@
     color: var(--white);
 }
 
+.title-text {
+    color: var(--text-primary);
+}
+
 .nickname-section {
     display: flex;
     align-items: center;
@@ -49,7 +53,7 @@
 }
 
 .rooms-section h2 {
-    color: var(--white);
+    color: #000;
     margin-bottom: var(--spacing-xl);
     text-align: center;
     font-size: var(--font-size-3xl);
@@ -106,6 +110,7 @@
 }
 
 .empty-state-text {
+    color: var(--text-primary);
     font-size: var(--font-size-lg);
     opacity: 0.9;
 }
@@ -116,7 +121,7 @@
 }
 
 .create-room-section h3 {
-    color: var(--white);
+    color: #000;
     margin-bottom: var(--spacing-xl);
     font-size: var(--font-size-xl);
 }
