@@ -69,11 +69,11 @@ describe('room.js (frontend DOM)', () => {
   afterEach(() => {
     jest.clearAllMocks();
     delete global.io;
+    delete window.__NAVIGATE_TO_LOBBY__;
   });
 
   it('초기화 시 닉네임 표시와 자동 준비 emitting', () => {
     expect(getNicknameMock).toHaveBeenCalled();
-    ``;
     expect(document.getElementById('myName').textContent).toBe('Player1');
     expect(socketMock.emit).toHaveBeenCalledWith('playerReady', {
       nickname: 'Player1',
@@ -116,6 +116,54 @@ describe('room.js (frontend DOM)', () => {
   it('무승부 버튼 클릭 시 callDraw emit', () => {
     document.getElementById('callDraw').click();
     expect(socketMock.emit).toHaveBeenCalledWith('callDraw', {
+      roomId: 'test-room',
+      nickname: 'Player1',
+    });
+  });
+
+  it('퇴장 버튼 클릭 시 소켓 연결 해제 및 페이지 이동', () => {
+    const navigateMock = jest.fn((href) => {
+      window.__LAST_NAV__ = href;
+    });
+    window.__NAVIGATE_TO_LOBBY__ = navigateMock;
+
+    document.getElementById('leave').click();
+
+    expect(socketMock.disconnect).toHaveBeenCalled();
+    expect(navigateMock).toHaveBeenCalledWith('/lobby.html');
+  });
+
+  it('기권 버튼 클릭시 확인 다이얼로그 표시 및 기권 emit', () => {
+    // 게임 진행 중 상태로 세팅
+    handlers.updateRoom({
+      gameData: { isPlaying: true },
+      playerData: {
+        players: [
+          { nickname: 'Player1', isReady: true },
+          { nickname: 'Opponent', isReady: true },
+        ],
+      },
+    });
+
+    // 준비 버튼 클릭으로 기권 시도 (이 시점에 버튼은 "기권")
+    document.getElementById('readyButton').click();
+
+    // 다이얼로그 생성 확인
+    expect(createDialogMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: '기권 확인',
+        message: '정말로 기권하시겠습니까?',
+        confirmText: '기권',
+        onConfirm: expect.any(Function),
+      }),
+    );
+
+    // 다이얼로그 확인 콜백 호출 시뮬레이션
+    const dialogArgs = createDialogMock.mock.calls[0][0];
+    dialogArgs.onConfirm();
+
+    // 기권 emit 확인
+    expect(socketMock.emit).toHaveBeenCalledWith('resign', {
       roomId: 'test-room',
       nickname: 'Player1',
     });

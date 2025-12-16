@@ -1,9 +1,6 @@
 import express from 'express';
 import { initSocket } from './ws/server.js';
 import lobbyRouter from './routes/lobby.router.js';
-import session from 'express-session';
-import { RedisStore } from 'connect-redis';
-import { createClient } from 'redis';
 import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
@@ -32,31 +29,6 @@ async function initializeApp() {
   // Compression
   app.use(compression());
 
-  // Redis client setup for session store
-  let redisClient = null;
-  let sessionStore = null;
-
-  if (config.isProduction) {
-    try {
-      redisClient = createClient({ url: config.redisUrl });
-      redisClient.on('error', (err) => {
-        logger.error({ error: err.message }, 'Redis client error');
-      });
-      redisClient.on('connect', () => {
-        logger.info('Redis client connected');
-      });
-      await redisClient.connect();
-      sessionStore = new RedisStore({ client: redisClient });
-      logger.info('Redis session store initialized');
-    } catch (error) {
-      logger.error(
-        { error: error.message },
-        'Failed to connect to Redis in production; exiting to avoid MemoryStore',
-      );
-      process.exit(1);
-    }
-  }
-
   // Middleware: Static files
   app.use(
     express.static('public', {
@@ -80,7 +52,7 @@ async function initializeApp() {
   // Middleware: Request logging
   app.use(requestLogger);
 
-  // Basic rate limit (before session to avoid creating sessions for rejected traffic)
+  // Basic rate limit
   app.use(
     rateLimit({
       windowMs: config.rateLimitWindowMs,
@@ -89,26 +61,6 @@ async function initializeApp() {
       legacyHeaders: false,
     }),
   );
-
-  // Middleware: Session management
-  const sessionConfig = {
-    secret: config.sessionSecret,
-    resave: false,
-    saveUninitialized: false,
-    name: config.sessionCookieName,
-    cookie: {
-      maxAge: config.sessionMaxAge,
-      httpOnly: true,
-      secure: config.isProduction,
-      sameSite: 'strict',
-    },
-  };
-
-  if (sessionStore) {
-    sessionConfig.store = sessionStore;
-  }
-
-  app.use(session(sessionConfig));
 
   // Routes
   app.use('/lobby', lobbyRouter);
@@ -164,16 +116,6 @@ async function initializeApp() {
   process.on('SIGTERM', async () => {
     logger.info('SIGTERM received, shutting down gracefully');
 
-    // Close Redis connection
-    if (redisClient) {
-      try {
-        await redisClient.quit();
-        logger.info('Redis client disconnected');
-      } catch (error) {
-        logger.error({ error: error.message }, 'Error closing Redis client');
-      }
-    }
-
     server.close(() => {
       logger.info('HTTP server closed');
       process.exit(0);
@@ -182,16 +124,6 @@ async function initializeApp() {
 
   process.on('SIGINT', async () => {
     logger.info('SIGINT received, shutting down gracefully');
-
-    // Close Redis connection
-    if (redisClient) {
-      try {
-        await redisClient.quit();
-        logger.info('Redis client disconnected');
-      } catch (error) {
-        logger.error({ error: error.message }, 'Error closing Redis client');
-      }
-    }
 
     server.close(() => {
       logger.info('HTTP server closed');

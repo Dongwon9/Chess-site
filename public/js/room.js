@@ -31,6 +31,19 @@ let roomId = null;
 let nickname = null;
 let domElements = {};
 
+function redirectToLobby() {
+  if (typeof window === 'undefined') return;
+  if (typeof window.__NAVIGATE_TO_LOBBY__ === 'function') {
+    window.__NAVIGATE_TO_LOBBY__('/lobby.html');
+    return;
+  }
+  if (typeof window.location?.assign === 'function') {
+    window.location.assign('/lobby.html');
+  } else {
+    window.location.href = '/lobby.html';
+  }
+}
+
 /**
  * 애플리케이션 초기화
  */
@@ -108,14 +121,20 @@ function setupEventListeners() {
 
   domElements.leave.addEventListener('click', () => {
     if (!ROOM_STATE.gameData?.isPlaying) {
-      window.location.href = '/lobby.html';
+      if (socket) {
+        socket.disconnect();
+      }
+      redirectToLobby();
     } else {
       createDialog({
         title: '게임 중단 확인',
         message: '정말로 나가시겠습니까?\n 진행중인 게임은 패배 처리됩니다.',
         confirmText: '나가기',
         onConfirm: () => {
-          window.location.href = '/lobby.html';
+          if (socket) {
+            socket.disconnect();
+          }
+          redirectToLobby();
         },
         isDanger: true,
       });
@@ -284,7 +303,7 @@ function handleSocketError(error) {
 function handleFatalError(error) {
   console.error('치명적 에러:', error);
   alert(error.message || '오류가 발생했습니다.');
-  window.location.href = '/lobby.html';
+  redirectToLobby();
 }
 
 /**
