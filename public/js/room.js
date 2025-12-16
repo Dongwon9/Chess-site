@@ -1,22 +1,25 @@
 import { updateBoard } from './boardManager.js';
+import { createDialog } from './util.js';
 import { getNickname } from './getNickname.js';
 // socket.io-client는 서버에서 제공되는 글로벌 `io`를 사용합니다.
+/* global io */
 
+/**
+ * DOM 요소 선택자 상수
+ */
 const DOM_SELECTORS = {
   opponentName: '#opponentName',
   opponentReady: '#opponentReady',
   readyButton: '#readyButton',
   myName: '#myName',
   leave: '#leave',
-  confirmLeave: '#confirmLeave',
-  dialogConfirmButton: '#dialogConfirmButton',
-  dialogCancelButton: '#dialogCancelButton',
-  confirmResign: '#confirmResign',
-  resignDialogConfirmButton: '#resignDialogConfirmButton',
-  resignDialogCancelButton: '#resignDialogCancelButton',
   callDraw: '#callDraw',
 };
 
+/**
+ * 방 상태 관리 객체
+ * @type {{gameData: object|null, me: object|null, opponent: object|null}}
+ */
 const ROOM_STATE = {
   gameData: null,
   me: null,
@@ -60,22 +63,6 @@ function cacheDOMElements() {
     ),
     readyButton: document.getElementById(DOM_SELECTORS.readyButton.slice(1)),
     leave: document.getElementById(DOM_SELECTORS.leave.slice(1)),
-    confirmLeave: document.getElementById(DOM_SELECTORS.confirmLeave.slice(1)),
-    dialogConfirmButton: document.getElementById(
-      DOM_SELECTORS.dialogConfirmButton.slice(1),
-    ),
-    dialogCancelButton: document.getElementById(
-      DOM_SELECTORS.dialogCancelButton.slice(1),
-    ),
-    confirmResign: document.getElementById(
-      DOM_SELECTORS.confirmResign.slice(1),
-    ),
-    resignDialogConfirmButton: document.getElementById(
-      DOM_SELECTORS.resignDialogConfirmButton.slice(1),
-    ),
-    resignDialogCancelButton: document.getElementById(
-      DOM_SELECTORS.resignDialogCancelButton.slice(1),
-    ),
     callDraw: document.getElementById(DOM_SELECTORS.callDraw.slice(1)),
   };
 
@@ -123,56 +110,25 @@ function setupEventListeners() {
     if (!ROOM_STATE.gameData?.isPlaying) {
       window.location.href = '/lobby.html';
     } else {
-      domElements.confirmLeave.showModal();
+      createDialog({
+        title: '게임 중단 확인',
+        message: '정말로 나가시겠습니까?\n 진행중인 게임은 패배 처리됩니다.',
+        confirmText: '나가기',
+        onConfirm: () => {
+          window.location.href = '/lobby.html';
+        },
+        isDanger: true,
+      });
     }
   });
 
-  // 확인 버튼: /lobby로 이동
-  domElements.dialogConfirmButton.addEventListener('click', () => {
-    domElements.confirmLeave.close();
-    window.location.href = '/lobby.html';
-  });
-
-  // 취소 버튼: 다이얼로그 닫기
-  domElements.dialogCancelButton.addEventListener('click', () => {
-    domElements.confirmLeave.close();
-  });
-
-  domElements.resignDialogConfirmButton.addEventListener('click', () => {
-    socket.emit('resign', { roomId, nickname });
-    domElements.confirmResign.close();
-  });
-
-  domElements.resignDialogCancelButton.addEventListener('click', () => {
-    domElements.confirmResign.close();
-  });
-
   domElements.callDraw.addEventListener('click', () => {
-    socket.emit('callDraw', { roomId, nickname });
+    try {
+      socket.emit('callDraw', { roomId, nickname });
+    } catch (error) {
+      console.error('무승부 요청 실패:', error);
+    }
   });
-}
-
-/**
- * 이벤트 리스너 정리 (메모리 누수 방지)
- */
-function cleanupEventListeners() {
-  if (domElements.readyButton) {
-    domElements.readyButton.removeEventListener(
-      'click',
-      handleReadyButtonClick,
-    );
-  }
-  if (domElements.dialogConfirmButton) {
-    domElements.dialogConfirmButton.removeEventListener('click', () => {
-      domElements.confirmLeave.close();
-      window.location.href = '/lobby.html';
-    });
-  }
-  if (domElements.dialogCancelButton) {
-    domElements.dialogCancelButton.removeEventListener('click', () => {
-      domElements.confirmLeave.close();
-    });
-  }
 }
 
 /**
@@ -187,7 +143,19 @@ function handleReadyButtonClick() {
       console.error('준비 상태 전송 실패:', error);
     }
   } else {
-    domElements.confirmResign.showModal();
+    createDialog({
+      title: '기권 확인',
+      message: '정말로 기권하시겠습니까?',
+      confirmText: '기권',
+      onConfirm: () => {
+        try {
+          socket.emit('resign', { roomId, nickname });
+        } catch (error) {
+          console.error('포기는 허용되지 않았다.\n오류 내용:', error);
+        }
+      },
+      isDanger: true,
+    });
   }
 }
 
@@ -205,10 +173,14 @@ function autoReadyOnJoin() {
  */
 function handleRoomUpdate(data) {
   try {
+    if (!data) {
+      throw new Error('방 업데이트 데이터가 없습니다.');
+    }
+
     const { gameData, playerData, gameResult } = data;
 
     if (!gameData || !playerData) {
-      throw new Error('유효하지 않은 방 데이터');
+      throw new Error('유효하지 않은 방 데이터입니다.');
     }
 
     updateRoomState(gameData, playerData);
@@ -317,11 +289,17 @@ function handleFatalError(error) {
 
 /**
  * 방 데이터 조회
+ * @returns {{gameData: object|null, me: object|null, opponent: object|null}} 현재 방 상태
  */
 function getRoomData() {
   return ROOM_STATE;
 }
 
+/**
+ * 게임 결과 알림
+ * @param {string|null} winner - 승자 닉네임 (무승부시 null)
+ * @param {string} reason - 결과 사유
+ */
 function alertResult(winner, reason) {
   let message = '';
   if (winner === nickname) {
@@ -337,7 +315,6 @@ function alertResult(winner, reason) {
  * 페이지 언로드 시 리소스 정리
  */
 window.addEventListener('beforeunload', () => {
-  cleanupEventListeners();
   if (socket) {
     socket.disconnect();
   }
