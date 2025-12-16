@@ -11,10 +11,11 @@ import cors from 'cors';
 import { requestLogger } from './middleware/requestLogger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import logger from './utils/logger.js';
-import { config } from './config/env.js';
+import { config, logConfig } from './config/env.js';
 
 // Async initialization function
 async function initializeApp() {
+  logConfig();
   const app = express();
 
   // Explicitly disable x-powered-by (helmet also handles this defensively)
