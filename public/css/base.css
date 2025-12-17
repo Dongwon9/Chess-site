@@ -88,6 +88,7 @@ body {
     /* Z-Index Scale */
     --z-fixed: 1000;
     --z-modal: 2000;
+    --z-max: 9999;
 }
 
 /* ========== Utility Classes ========== */
@@ -108,4 +109,33 @@ body {
 .card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-xl);
+}
+
+/* ========== Toast ========== */
+#toast-container {
+    position: fixed;
+    top: var(--spacing-lg);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    z-index: var(--z-max);
+}
+
+.toast {
+    background: var(--black-alpha-50);
+    color: var(--white);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    font-size: var(--font-size-base);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
 }

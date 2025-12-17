@@ -1,20 +1,8 @@
 import { updateBoard } from './boardManager.js';
-import { createDialog } from './util.js';
+import { createDialog, createToast } from './util.js';
 import { getNickname } from './getNickname.js';
 // socket.io-client는 서버에서 제공되는 글로벌 `io`를 사용합니다.
 /* global io */
-
-/**
- * DOM 요소 선택자 상수
- */
-const DOM_SELECTORS = {
-  opponentName: '#opponentName',
-  opponentReady: '#opponentReady',
-  readyButton: '#readyButton',
-  myName: '#myName',
-  leave: '#leave',
-  callDraw: '#callDraw',
-};
 
 /**
  * 방 상태 관리 객체
@@ -69,14 +57,12 @@ function initializeApp() {
  */
 function cacheDOMElements() {
   domElements = {
-    myName: document.getElementById(DOM_SELECTORS.myName.slice(1)),
-    opponentName: document.getElementById(DOM_SELECTORS.opponentName.slice(1)),
-    opponentReady: document.getElementById(
-      DOM_SELECTORS.opponentReady.slice(1),
-    ),
-    readyButton: document.getElementById(DOM_SELECTORS.readyButton.slice(1)),
-    leave: document.getElementById(DOM_SELECTORS.leave.slice(1)),
-    callDraw: document.getElementById(DOM_SELECTORS.callDraw.slice(1)),
+    myName: document.getElementById('myName'),
+    opponentName: document.getElementById('opponentName'),
+    opponentReady: document.getElementById('opponentReady'),
+    readyButton: document.getElementById('readyButton'),
+    leave: document.getElementById('leave'),
+    callDraw: document.getElementById('callDraw'),
   };
 
   if (Object.values(domElements).some((el) => !el)) {
@@ -106,7 +92,7 @@ function initializeSocket() {
     socket.on('disconnect', handleDisconnect);
     socket.on('error', handleSocketError);
     socket.on('drawCalled', () => {
-      console.log('무승부 제안됨');
+      createToast('무승부가 제안되었습니다.', 3500);
     });
   } catch (error) {
     handleFatalError(new Error(`소켓 초기화 실패: ${error.message}`));

@@ -65,3 +65,24 @@ export function createDialog({
   dialog.showModal();
   return dialog;
 }
+//토스트 메시지 만드는 함수
+export function createToast(message, duration = 3000) {
+  const container = document.getElementById('toast-container');
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+
+  container.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, duration);
+}
