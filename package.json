@@ -12,7 +12,7 @@
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "express": "^5.2.0",
+    "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "pino": "^10.1.0",
@@ -21,13 +21,14 @@
   },
   "devDependencies": {
     "@chrisoakman/chessboardjs": "^1.0.0",
-    "@eslint/js": "^9.39.1",
-    "eslint": "^9.39.1",
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
     "globals": "^16.5.0",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "nodemon": "^3.1.11",
     "pino-pretty": "^13.1.3",
     "socket.io-client": "^4.8.1"
-  }
+  },
+  "packageManager": "pnpm@10.26.0"
 }
